@@ -1,13 +1,14 @@
 #include <Arduino.h>
-#include <avr/power.h>
 #include <EEPROM.h>
+#include <avr/power.h>
+#include <avr/sleep.h>
 
 // Pins
 #define MOTOR_A A1
 #define MOTOR_B A3
 #define POWER_CHECK A2
 #define POWER_ACTIVATE 12
-
+#define LOG_RESET 9
 
 // motor power Levels
 const uint8_t MAX = 255; // 1023/1023
@@ -15,8 +16,6 @@ const uint8_t STRONG = 140; // 90-100mA 560/1023
 const uint8_t WEAK = 120; // 75-90mA 480/1023
 const uint8_t OFF = 0;
 const int MOTOR_START_WAIT = 1000;
-// when debugging, we can decrease the CYCLE_LENGTH so we don't have to wait
-const unsigned long CYCLE_LENGTH = 60000; // 60*1000 = 1 minute
 
 // Voltage Levels
 const int OVERCHARGE = 837; // 3.6v
@@ -40,6 +39,19 @@ const bool B = false;
 unsigned int logPos = 3; // first two bytes is reserved for logPointer
 unsigned int logStart = 3;
 
+// timers for sleep and stuff
+volatile uint8_t sleep_for = 0;
+//const unsigned int sleep_cycle = 4090; // TCCR1B = 0x05; = 4.09s
+// when debugging, we can decrease the CYCLE_LENGTH so we don't have to wait
+// CYCLE_LENGTH is based on sleep cycles, each of which is (currently) ~4.09s
+// which makes 15 cycles roughly 61.35 seconds
+const unsigned long CYCLE_LENGTH = 15;
+
+ISR(TIMER1_OVF_vect){
+  // we woke up (used 1 sleep cycle)
+  sleep_for--;
+}
+
 void clearLogs(){
   for (unsigned int i = 0 ; i < EEPROM.length() ; i++) {
     EEPROM.write(i, 0);
@@ -47,20 +59,16 @@ void clearLogs(){
 }
 
 void loadLogPosition(){
-  // You should probably clearLogs() before using it the first time.
+  // You should probably clearLogs() before using it the first time
+  // It's activated on startup() if you ground the LOG_RESET pin
   uint8_t high_byte = EEPROM.read(0);
   uint8_t low_byte = EEPROM.read(1);
   logPos = high_byte * 256 + low_byte;
   if(logPos < logStart){ logPos = logStart; }
 }
 
-void setup(){
-  pinMode(MOTOR_A, OUTPUT);
-  pinMode(MOTOR_B, OUTPUT);
-  pinMode(POWER_CHECK, INPUT);
-  pinMode(POWER_ACTIVATE, OUTPUT);
-  analogReference(INTERNAL);
-  // First few readings after changing analogReference will be wrong.
+void startup(){
+  // First few readings after changing analogReference is unreliable
   analogRead(POWER_CHECK);
   delay(500);
   analogRead(POWER_CHECK);
@@ -69,9 +77,33 @@ void setup(){
   delay(200);
   analogRead(POWER_CHECK);
   // end analogReference setup
+
+  if(digitalRead(LOG_RESET) == LOW){ clearLogs(); }
+  loadLogPosition();
+}
+
+void setup(){
+  pinMode(MOTOR_A, OUTPUT);
+  pinMode(MOTOR_B, OUTPUT);
+  pinMode(POWER_CHECK, INPUT);
+  pinMode(POWER_ACTIVATE, OUTPUT);
+  pinMode(LOG_RESET, INPUT_PULLUP);
+  analogReference(INTERNAL);
+
+  // Disable I2C and SPI since we're not using it.
+  // TODO: disable additional timers? (0 and 2 look like prime targets)
+  // but are they needed for analog ouput? (since it's pwm)
+  set_sleep_mode(SLEEP_MODE_IDLE);
   power_twi_disable();
   power_spi_disable();
-  loadLogPosition();
+  // timers setup
+  // http://donalmorrissey.blogspot.com/2011/11/sleeping-arduino-part-4-wake-up-via.html
+  TCCR1A = 0x00;
+  TCCR1A = 0x00;
+  TCCR1B = 0x05; // 4.09s
+  TIMSK1 = 0x01;
+
+  startup();
 }
 
 void runMotor(bool useMotorA, uint8_t power){
@@ -123,6 +155,8 @@ void saveCycle(uint8_t power, uint8_t cycle_time){
 }
 
 void loop(){
+  if(sleep_for > 0){ sleep_mode(); }
+
   uint8_t cycle_time = 1;
   int power = 0;
 
@@ -211,5 +245,6 @@ void loop(){
   saveCycle(power, cycle_time);
 
   cycle = (cycle + 1) % 4;
-  delay(CYCLE_LENGTH * cycle_time); // TODO: convert to sleep
+  sleep_for = cycle_time * CYCLE_LENGTH;
+  // sleep will be handled on the start of the loop
 }
