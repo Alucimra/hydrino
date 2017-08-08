@@ -43,9 +43,9 @@ unsigned int logStart = 3;
 volatile uint8_t sleep_for = 0;
 //const unsigned int sleep_cycle = 4090; // TCCR1B = 0x05; = 4.09s
 // when debugging, we can decrease the CYCLE_LENGTH so we don't have to wait
-// CYCLE_LENGTH is based on sleep cycles, each of which is (currently) ~4.09s
+// sleep time is based on sleep cycles, each of which is (currently) ~4.09s
 // which makes 15 cycles roughly 61.35 seconds
-const unsigned long CYCLE_LENGTH = 15;
+const unsigned long CYCLE_LENGTH = 14;
 
 ISR(TIMER1_OVF_vect){
   // we woke up (used 1 sleep cycle)
@@ -60,7 +60,7 @@ void clearLogs(){
 
 void loadLogPosition(){
   // You should probably clearLogs() before using it the first time
-  // It's activated on startup() if you ground the LOG_RESET pin
+  // It happens on startup() if you ground the LOG_RESET pin
   uint8_t high_byte = EEPROM.read(0);
   uint8_t low_byte = EEPROM.read(1);
   logPos = high_byte * 256 + low_byte;
@@ -68,7 +68,8 @@ void loadLogPosition(){
 }
 
 void startup(){
-  // First few readings after changing analogReference is unreliable
+  // First few readings after changing analogReference is unreliable, dump them
+  // TODO: These delays are probably unnecessary
   analogRead(POWER_CHECK);
   delay(500);
   analogRead(POWER_CHECK);
@@ -155,7 +156,7 @@ void saveCycle(uint8_t power, uint8_t cycle_time){
 }
 
 void loop(){
-  if(sleep_for > 0){ sleep_mode(); }
+  while(sleep_for > 0){ sleep_mode(); }
 
   uint8_t cycle_time = 1;
   int power = 0;
@@ -246,5 +247,5 @@ void loop(){
 
   cycle = (cycle + 1) % 4;
   sleep_for = cycle_time * CYCLE_LENGTH;
-  // sleep will be handled on the start of the loop
+  // sleep will be handled on next iteration of the loop
 }
