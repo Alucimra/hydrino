@@ -3,9 +3,11 @@
 #include <EEPROM.h>
 
 // Pins
-#define MOTOR_A A2
-#define MOTOR_B A4
-#define POWER_CHECK A6
+#define MOTOR_A A1
+#define MOTOR_B A3
+#define POWER_CHECK A2
+#define POWER_ACTIVATE 12
+
 
 // motor power Levels
 const uint8_t MAX = 255; // 1023/1023
@@ -13,6 +15,7 @@ const uint8_t STRONG = 140; // 90-100mA 560/1023
 const uint8_t WEAK = 120; // 75-90mA 480/1023
 const uint8_t OFF = 0;
 const int MOTOR_START_WAIT = 1000;
+// when debugging, we can decrease the CYCLE_LENGTH so we don't have to wait
 const unsigned long CYCLE_LENGTH = 60000; // 60*1000 = 1 minute
 
 // Voltage Levels
@@ -35,7 +38,7 @@ const bool B = false;
 // we have 1024 bytes of EEPROM and will be using 512 bytes for log storage.
 // marker at position 0 tells us where we are.
 unsigned int logPos = 3; // first two bytes is reserved for logPointer
-const unsigned int logStart = 3;
+unsigned int logStart = 3;
 
 void clearLogs(){
   for (unsigned int i = 0 ; i < EEPROM.length() ; i++) {
@@ -55,6 +58,7 @@ void setup(){
   pinMode(MOTOR_A, OUTPUT);
   pinMode(MOTOR_B, OUTPUT);
   pinMode(POWER_CHECK, INPUT);
+  pinMode(POWER_ACTIVATE, OUTPUT);
   analogReference(INTERNAL);
   // First few readings after changing analogReference will be wrong.
   analogRead(POWER_CHECK);
@@ -112,13 +116,20 @@ void saveCycle(uint8_t power, uint8_t cycle_time){
   uint8_t cycling = (cycle_time << 2) + cycle;
   EEPROM.write(logPos++, power);
   EEPROM.write(logPos++, cycling);
+  delay(500);
   EEPROM.write(0, (uint8_t)(logPos >> 8));
   EEPROM.write(1, (uint8_t)(logPos));
+  delay(500);
 }
 
 void loop(){
   uint8_t cycle_time = 1;
-  int power = analogRead(POWER_CHECK);
+  int power = 0;
+
+  digitalWrite(POWER_ACTIVATE, HIGH);
+  delay(250);
+  power = analogRead(POWER_CHECK);
+  digitalWrite(POWER_ACTIVATE, LOW);
 
   if(power > SOLAR + TOLERANCE){
     // Power is higher than the solar panel, which means battery is over-charged.
