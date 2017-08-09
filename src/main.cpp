@@ -100,9 +100,9 @@ void setup(){
   // timers setup
   // http://donalmorrissey.blogspot.com/2011/11/sleeping-arduino-part-4-wake-up-via.html
   TCCR1A = 0x00;
-  TCCR1A = 0x00;
+  TCNT1 = 0x0000;
   TCCR1B = 0x05; // 4.09s
-  TIMSK1 = 0x01;
+  TIMSK1 = 0x01; // enable interrupt
 
   startup();
 }
@@ -247,5 +247,5 @@ void loop(){
 
   cycle = (cycle + 1) % 4;
   sleep_for = cycle_time * CYCLE_LENGTH;
-  // sleep will be handled on next iteration of the loop
+  // sleep will be handled on next iteration of this loop
 }
