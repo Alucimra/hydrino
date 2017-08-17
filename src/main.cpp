@@ -7,25 +7,29 @@
 #define MOTOR_A A1
 #define MOTOR_B A3
 #define POWER_CHECK A2
-#define POWER_ACTIVATE 12
+#define POWER_ACTIVATE 11
 #define LOG_RESET 9
+#define DEBUG_PIN 8
 
 // motor power Levels
 const uint8_t MAX = 255; // 1023/1023
-const uint8_t STRONG = 140; // 90-100mA 560/1023
-const uint8_t WEAK = 120; // 75-90mA 480/1023
+const uint8_t STRONG = 150; // 140 = 90-100mA 560/1023
+const uint8_t WEAK = 135; // 120 = 75-90mA 480/1023, if too low, motor stalls!
 const uint8_t OFF = 0;
 const int MOTOR_START_WAIT = 1000;
 
 // Voltage Levels
-const int OVERCHARGE = 837; // 3.6v
-const int SOLAR = 814; // 3.5v
-const int FULL = 791; // 3.4v
-const int CHARGED = 767; // 3.3v
-const int NOMINAL = 744; // 3.2v
-const int DRAINED = 721; // 3.1v
-const int CUTOFF = 697; // 3.0v
-const int TOLERANCE = 50; // 0.05v
+// WARNING: Assumes internal reference voltage is 1.0v. See docs/voltage levels.txt
+// aRead = (battery_voltage / 4) / (1.0 / 1023)
+// battery_voltage = aRead * 4 * (1.0 / 1023)
+const int OVERCHARGE = 935; // >3.6v
+const int SOLAR = 920; // ~3.6v
+const int FULL = 870; // 3.4v
+const int CHARGED = 845; // 3.3v
+const int NOMINAL = 800; // 3.2v
+const int DRAINED = 770; // 3.1v
+const int CUTOFF = 750; // 3.0v
+const int TOLERANCE = 13; // 0.05v
 
 // globals
 bool motorA = false;
@@ -44,8 +48,11 @@ volatile uint8_t sleep_for = 0;
 //const unsigned int sleep_cycle = 4090; // TCCR1B = 0x05; = 4.09s
 // when debugging, we can decrease the CYCLE_LENGTH so we don't have to wait
 // sleep time is based on sleep cycles, each of which is (currently) ~4.09s
-// which makes 15 cycles roughly 61.35 seconds
-const unsigned long CYCLE_LENGTH = 14;
+// which makes 15 cycles roughly 61.35 seconds (default: 14 at 4.09s)
+// or 7 at 8.18s
+unsigned long CYCLE_LENGTH = 7;
+bool isDebugging = false;
+
 
 ISR(TIMER1_OVF_vect){
   // we woke up (used 1 sleep cycle)
@@ -67,6 +74,44 @@ void loadLogPosition(){
   if(logPos < logStart){ logPos = logStart; }
 }
 
+void readLogs(){
+  unsigned int i = 0;
+  unsigned int value = 0;
+  Serial.begin(9600);
+  Serial.print(logPos);
+  Serial.println();
+
+  while(i < logStart){
+    Serial.print(i);
+    Serial.print('=');
+    Serial.print(EEPROM.read(i++));
+    Serial.print("\t");
+  }
+  Serial.println();
+
+  while(i < logPos){
+    Serial.print(i);
+    Serial.print("\t");
+    value = EEPROM.read(i);
+    if(i % 2 == 0){
+      // even numbered sequences are cycles
+      Serial.print("cycle: ");
+      Serial.print(value % 4);
+      Serial.print("\tcycle_time: ");
+      Serial.print(value >> 2);
+    } else  {
+      // odd number sequences is the power
+      Serial.print(value);
+      Serial.print('=');
+      Serial.print(0.015686*value);
+      Serial.print('v');
+    }
+    Serial.println();
+    i++;
+  }
+  Serial.print("Logs Read");
+}
+
 void startup(){
   // First few readings after changing analogReference is unreliable, dump them
   // TODO: These delays are probably unnecessary
@@ -81,6 +126,14 @@ void startup(){
 
   if(digitalRead(LOG_RESET) == LOW){ clearLogs(); }
   loadLogPosition();
+  if(digitalRead(DEBUG_PIN) == LOW){
+    isDebugging = true;
+    readLogs();
+  }
+
+  // remove the pullup, hopefully to conserve some power.
+  pinMode(LOG_RESET, INPUT);
+  pinMode(DEBUG_PIN, INPUT);
 }
 
 void setup(){
@@ -89,7 +142,9 @@ void setup(){
   pinMode(POWER_CHECK, INPUT);
   pinMode(POWER_ACTIVATE, OUTPUT);
   pinMode(LOG_RESET, INPUT_PULLUP);
+  pinMode(DEBUG_PIN, INPUT_PULLUP);
   analogReference(INTERNAL);
+  analogRead(POWER_CHECK); // read and drop
 
   // Disable I2C and SPI since we're not using it.
   // TODO: disable additional timers? (0 and 2 look like prime targets)
@@ -142,7 +197,8 @@ void saveCycle(uint8_t power, uint8_t cycle_time){
   // NOTE: power has been scaled down from 1023 to 255 to save space, low res
 
   // this should not happen...we should always be on an odd byte when called
-  if(logPos % 2 == 1){ logPos++; }
+  if(logPos % 2 == 0){ logPos++; }
+
   // we will overflow, cycle back around to the start
   if((logPos + 2) >= EEPROM.length()){ logPos = logStart; }
 
@@ -155,15 +211,23 @@ void saveCycle(uint8_t power, uint8_t cycle_time){
   delay(500);
 }
 
+// cycle_time should be tweaked so that the battery should be around 3.0v
+// by the time the sun starts shining (and recharging the battery).
+// This will be affected by total sunlight (seasonal) and the battery, so will
+// likely need seasonal updates.
 void loop(){
+  if(isDebugging){ delay(1000); }
   while(sleep_for > 0){ sleep_mode(); }
 
   uint8_t cycle_time = 1;
   int power = 0;
 
+  // TODO: Turn motors off while we check power? (current draw affects readings)
+
   digitalWrite(POWER_ACTIVATE, HIGH);
   delay(250);
   power = analogRead(POWER_CHECK);
+  delay(250);
   digitalWrite(POWER_ACTIVATE, LOW);
 
   if(power > SOLAR + TOLERANCE){
@@ -202,11 +266,11 @@ void loop(){
       stopMotor(A);
       runMotor(B, WEAK);
     }
-  } else if(power > NOMINAL + TOLERANCE){
+  } else if(power > NOMINAL - TOLERANCE){
     if(cycle == 0 || cycle == 2){
       stopMotor(A);
       stopMotor(B);
-      cycle_time = 29;
+      cycle_time = 19;
     } else if(cycle == 1){
       runMotor(A, WEAK);
       stopMotor(B);
@@ -214,11 +278,11 @@ void loop(){
       stopMotor(A);
       runMotor(B, WEAK);
     }
-  } else if(power > DRAINED + TOLERANCE){
+  } else if(power > DRAINED - TOLERANCE){
     if(cycle == 0 || cycle == 2){
       stopMotor(A);
       stopMotor(B);
-      cycle_time = 39;
+      cycle_time = 29;
     } else if(cycle == 1){
       runMotor(A, WEAK);
       stopMotor(B);
@@ -243,7 +307,7 @@ void loop(){
     stopMotor(B);
     cycle_time = 20;
   }
-  saveCycle(power, cycle_time);
+  saveCycle(power / 4, cycle_time);
 
   cycle = (cycle + 1) % 4;
   sleep_for = cycle_time * CYCLE_LENGTH;

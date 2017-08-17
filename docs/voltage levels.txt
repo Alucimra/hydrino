@@ -1,3 +1,26 @@
+# Internal Reference
+
+INTERNAL reference is 1.0~1.2v. Arduino docs say it's 1.1v, but it's not quite right.
+
+The internal reference is based on the bandgap inside the chip.
+
+It's stable for each chip, but across each chip, the number could be slightly different. In other words, two different chips will have different numbers.
+
+You can test it by doing an analogRead with the INTERNAL ref against a known stable voltage, and then figuring out what the reading is (writing to Serial). Could also write to EEPROM, but remember to divide by 4.
+
+internalRefV = maxAnalogRead * voltageGiven / analogReadValue
+
+example:
+
+voltage = 0.8v = 3.2v/4 (divide by 4 via divider)
+analogRead = 200
+
+internalRefV = 255 * 0.8 / 200 = 1v
+
+resolution = internalRefV / maxAnalogRead
+
+resolution = 1v/1023 = 0.000977517v per increment
+
 # Levels
 NAME	voltage	v/4	analogRead
 
@@ -12,8 +35,6 @@ CUTOFF	3.0	0.75	697
 TOLERANCE 0.05	50
 
 # Math
-
-INTERNAL reference is 1.1v
 
 1.1v / 1023 = 0.001075v
 

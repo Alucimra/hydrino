@@ -1,0 +1,3 @@
+flexbatter.scad,https://www.thingiverse.com/thing:456900/
+32650_battery_holder_-_one_cell.stl,https://www.thingiverse.com/thing:1577619/
+Soldering_to_Stainless_Steel.pdf,http://www.kester.com/Portals/0/Documents/Knowledge%20Base/Soldering_to_Stainless_Steel.pdf
