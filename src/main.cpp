@@ -32,11 +32,11 @@ const int CUTOFF = 750; // 3.0v
 const int TOLERANCE = 13; // 0.05v
 
 // globals
-bool motorA = false;
-bool motorB = false;
+bool motorArunning = false;
+bool motorBrunning = false;
 uint8_t cycle = 0;
-const bool A = true;
-const bool B = false;
+const bool motorA = true;
+const bool motorB = false;
 
 // we have 1024 bytes of EEPROM and will be using 512 bytes for log storage.
 // marker at position 0 tells us where we are.
@@ -173,26 +173,29 @@ void runMotor(bool useMotorA, uint8_t power){
     analogWrite(MOTOR_A, MAX);
     delay(MOTOR_START_WAIT);
     analogWrite(MOTOR_A, power);
-    motorA = true;
+    motorArunning = true;
   } else if(!useMotorA && !motorB){
     analogWrite(MOTOR_B, MAX);
     delay(MOTOR_START_WAIT);
     analogWrite(MOTOR_B, power);
-    motorB = true;
+    motorBrunning = true;
   }
 }
 
 void stopMotor(bool useMotorA){
   if(useMotorA){
     digitalWrite(MOTOR_A, LOW);
-    motorA = false;
+    motorArunning = false;
   } else {
     digitalWrite(MOTOR_B, LOW);
-    motorB = false;
+    motorBrunning = false;
   }
 }
 
 void saveCycle(uint8_t power, uint8_t cycle_time){
+  // don't save data when we're debugging
+  if(isDebugging){ return; }
+
   // we save the power on odd byte, then cycle+cycle_time next (even)
   // NOTE: power has been scaled down from 1023 to 255 to save space, low res
 
@@ -216,7 +219,6 @@ void saveCycle(uint8_t power, uint8_t cycle_time){
 // This will be affected by total sunlight (seasonal) and the battery, so will
 // likely need seasonal updates.
 void loop(){
-  if(isDebugging){ delay(1000); }
   while(sleep_for > 0){ sleep_mode(); }
 
   uint8_t cycle_time = 1;
@@ -234,77 +236,77 @@ void loop(){
     // Power is higher than the solar panel, which means battery is over-charged.
     // In actual use, this should only happen when a new fully charged battery
     // was put in to replace the old battery. We use up power to bring it back down.
-    runMotor(A, STRONG);
-    runMotor(B, STRONG);
+    runMotor(motorA, STRONG);
+    runMotor(motorB, STRONG);
   } else if(power > FULL + TOLERANCE){
     if(cycle == 0){
-      runMotor(A, STRONG);
-      stopMotor(B);
+      runMotor(motorA, STRONG);
+      stopMotor(motorB);
       cycle_time = 2;
     } else if(cycle == 1){
-      runMotor(A, WEAK);
-      runMotor(B, WEAK);
+      runMotor(motorA, WEAK);
+      runMotor(motorB, WEAK);
       cycle_time = 1;
     } else if(cycle == 2){
-      stopMotor(A);
-      runMotor(B, STRONG);
+      stopMotor(motorA);
+      runMotor(motorB, STRONG);
       cycle_time = 2;
     } else if(cycle == 3){
-      stopMotor(A);
-      stopMotor(B);
+      stopMotor(motorA);
+      stopMotor(motorB);
       cycle_time = 5;
     }
   } else if(power > CHARGED + TOLERANCE){
     if(cycle == 0 || cycle == 2){
-      stopMotor(A);
-      stopMotor(B);
+      stopMotor(motorA);
+      stopMotor(motorB);
       cycle_time = 9;
     } else if(cycle == 1){
-      runMotor(A, WEAK);
-      stopMotor(B);
+      runMotor(motorA, WEAK);
+      stopMotor(motorB);
     } else if(cycle == 3){
-      stopMotor(A);
-      runMotor(B, WEAK);
+      stopMotor(motorA);
+      runMotor(motorB, WEAK);
     }
   } else if(power > NOMINAL - TOLERANCE){
     if(cycle == 0 || cycle == 2){
-      stopMotor(A);
-      stopMotor(B);
+      stopMotor(motorA);
+      stopMotor(motorB);
       cycle_time = 19;
     } else if(cycle == 1){
-      runMotor(A, WEAK);
-      stopMotor(B);
+      runMotor(motorA, WEAK);
+      stopMotor(motorB);
     } else if(cycle == 3){
-      stopMotor(A);
-      runMotor(B, WEAK);
+      stopMotor(motorA);
+      runMotor(motorB, WEAK);
     }
   } else if(power > DRAINED - TOLERANCE){
     if(cycle == 0 || cycle == 2){
-      stopMotor(A);
-      stopMotor(B);
+      stopMotor(motorA);
+      stopMotor(motorB);
       cycle_time = 29;
     } else if(cycle == 1){
-      runMotor(A, WEAK);
-      stopMotor(B);
+      runMotor(motorA, WEAK);
+      stopMotor(motorB);
     } else if(cycle == 3){
-      stopMotor(A);
-      runMotor(B, WEAK);
+      stopMotor(motorA);
+      runMotor(motorB, WEAK);
     }
   } else if(power > CUTOFF){
     if(cycle == 0 || cycle == 2){
-      stopMotor(A);
-      stopMotor(B);
+      stopMotor(motorA);
+      stopMotor(motorB);
       cycle_time = 59;
     } else if(cycle == 1){
-      runMotor(A, WEAK);
-      stopMotor(B);
+      runMotor(motorA, WEAK);
+      stopMotor(motorB);
     } else if(cycle == 3){
-      stopMotor(A);
-      runMotor(B, WEAK);
+      stopMotor(motorA);
+      runMotor(motorB, WEAK);
     }
   } else {
-    stopMotor(A);
-    stopMotor(B);
+    stopMotor(motorA);
+    stopMotor(motorB);
     cycle_time = 20;
   }
   saveCycle(power / 4, cycle_time);
