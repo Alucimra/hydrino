@@ -72,16 +72,18 @@ module arc(r1,r2,h,a1=0,a2=0){
 // Heinz Spiess, 2014-09-06 (CC BY-SA)
 /////////////////////////////////////////////////////////////////////////////////
 module sline(angle,radius,i,w,h){
-   scale([angle[i]>=0?1:-1,1,1])
-      assign(r=abs(radius[i]))assign(a=angle[i])
+   scale([angle[i]>=0?1:-1,1,1]){
+      r=abs(radius[i]);
+    a=angle[i];
          translate([a?r:0,0,0]){
-	    translate([-w/2,-r-0.01,0])cube([w,0.02,h]); // tiny overlap!
-            if(a)arc(r-w/2,r+w/2,0,a,h=h);
-	    else if(r>0)translate([-w/2,-r,0])cube([w,r,h]);
-      if(i+1<len(angle))
-           rotate(angle[i])
-	      translate([a?-r:0,a?0:-r,0])
-	         sline(angle,radius,i+1,w,h);
+            translate([-w/2,-r-0.01,0])cube([w,0.02,h]); // tiny overlap!
+                if(a)arc(r-w/2,r+w/2,0,a,h=h);
+            else if(r>0)translate([-w/2,-r,0])cube([w,r,h]);
+          if(i+1<len(angle))
+               rotate(angle[i])
+              translate([a?-r:0,a?0:-r,0])
+                 sline(angle,radius,i+1,w,h);
+      }
   }
 }
 
@@ -90,8 +92,8 @@ module sline(angle,radius,i,w,h){
 //  FLEXBATTER:  Flexing battery holder with integrated plastic spring
 //
 //////////////////////////////////////////////////////////////////////////////////
-module flexbatter(n=1,l=65,d=18,hf=0.75,r=4,shd=3,eps=0.28,el=0,xchan=[1/4,3/4],$fn=24){
-ew=0.56;   // extrusion width
+module flexbatter(n=1,l=65,d=18,hf=0.75,r=4,shd=3,eps=0.28,el=0,ew=0.56, xchan=[1/4,3/4],bulges=true,symbols=true,wire_channel=true,$fn=24){
+//ew=0.56;   // extrusion width
 eh=0.25;   // extrusion height
 w = 4*ew;  // case wall thickness
 ws = 2*ew; // spring wall thickness
@@ -132,15 +134,18 @@ r = d/5+2*ws; // linear spring length (depends on sline() call!)
          }
       
          // lower and upper holes for contacts
-         for(z=[-2*ws,2*ws])
-            translate([-2*ws,-w,w-ws/2+d/2+z])cube([l+2*w+2,2*w,ws]);
+         for(z=[-4*ws,-ws])
+            translate([-2*ws,-w,w-ws/2+d/2+z])
+         cube([l+2*w+2,2*w,ws]);
+         
+         if(wire_channel){
+            // longitudinal bottom wire channel
+            translate([-2*ws,0,0])rotate([0,90,0])cylinder(r=w/2,h=l+w+2+r,$fn=5);
+         
       
-         // longitudinal bottom wire channel
-         translate([-2*ws,0,0])rotate([0,90,0])cylinder(r=w/2,h=l+w+2+r,$fn=5);
-      
-         // traversal bottom wire channels
-         for(x=l*xchan)translate([x,-d/2-w-1,eh]) rotate([-90,0,0])cylinder(r=w/2,h=d+2*w+ws+2,$fn=6);
-   
+             // traversal bottom wire channels
+             for(x=l*xchan)translate([x,-d/2-w-1,eh]) rotate([-90,0,0])cylinder(r=w/2,h=d+2*w+ws+2,$fn=6);
+         }
          // grip deepening
 	 if(deepen>0)
             translate([w+l/2-0.5,-d/2-w-0.01,w+d+l])
@@ -157,27 +162,32 @@ r = d/5+2*ws; // linear spring length (depends on sline() call!)
                 translate([0,0,w-shd/2+1])cylinder(r1=shd/2,r2=shd,h=shd/2+0.01);
              }
 
-         // holes for wires passing inside
-         for(sy=[-1,1])scale([1,sy,1]){
-	    translate([l-1,-d/2,w])cube([w+2,2,2]);
-            for(x=[3,l-7])translate([x,-d/2-w-ws-1,w])cube([3,w+ws+3,2]); 
-            translate([3,-d/2+w/2-0.75,-1])cube([3,1.5,w+2]); 
-            translate([-0.5,-d/2+w/2,0])rotate([0,90,0])cylinder(r=w/2,h=6.5,$fn=5);
+         if(wire_channel){
+             // holes for wires passing inside
+             for(sy=[-1,1])scale([1,sy,1]){
+            translate([l-1,-d/2,w])cube([w+2,2,2]);
+                for(x=[3,l-7])translate([x,-d/2-w-ws-1,w])cube([3,w+ws+3,2]); 
+                translate([3,-d/2+w/2-0.75,-1])cube([3,1.5,w+2]); 
+                translate([-0.5,-d/2+w/2,0])rotate([0,90,0])cylinder(r=w/2,h=6.5,$fn=5);
+             }
          }
 
          // engrave battery symbol
-	 translate([w+l/2,d/4+1,w])cube([l/5,d/4.5,4*eh],true);
-	 translate([w+l/2+l/10,d/4+1,w])cube([d/7,d/10,4*eh],true);
-	 // engrave plus symbol
-	 assign(sy=(l>12*shd)?1:-1){ // for short batteries +- on the side
-	    translate([w+l/2+l/(sy>0?5:10),sy*(d/4+1),w]){
-	       cube([1,d/4,4*eh],true);
-	       cube([d/4,1,4*eh],true);
+     if(symbols){
+         translate([w+l/2,d/4+1,w])cube([l/5,d/4.5,4*eh],true);
+         translate([w+l/2+l/10,d/4+1,w])cube([d/7,d/10,4*eh],true);
+         // engrave plus symbol
+         if(l>12*shd){ sy = 1; }
+         else { sy = -1; }
+         // for short batteries +- on the side
+        translate([w+l/2+l/(sy>0?5:10),sy*(d/4+1),w]){
+           cube([1,d/4,4*eh],true);
+           cube([d/4,1,4*eh],true);
             }
-	 // engrave minus symbol
-	    translate([w+l/2-l/(sy>0?5:10),sy*(d/4+1),w])
-	       cube([1,d/4,4*eh],true);
-         }
+     // engrave minus symbol
+        translate([w+l/2-l/(sy>0?5:10),sy*(d/4+1),w])
+           cube([1,d/4,4*eh],true);
+     }
    
          //correction for middle separators
          //if(i<n-1) translate([-d,d/2+w-ws/2,-1])cube([d,ws/2+0.1,d+2]);
@@ -189,14 +199,17 @@ r = d/5+2*ws; // linear spring length (depends on sline() call!)
       }
 
 
+    if(bulges){
       // horizontal contact bulges (+ and - pole)
       for(x=[-0.3,l])
          hull()for(y=[-3+el,3-el])
-            translate([x,y,w+d/2])sphere(r=ws);
+            translate([x,y,w+d/2])
+                sphere(r=ws);
    
       // vertical contact bulge (+ pole only)
       if(0)hull()for(z=[-3+el,3-el])for(x=[0,w-ws])
             translate([l+x,0,w+d/2+z])sphere(r=ws);
+  }
 
 
 
@@ -212,8 +225,8 @@ module flexbatter18650P(n=1){
    flexbatter(n=n,l=67.5,d=18.4,hf=0.75,shd=3,eps=0.28);
 }  
 
-module flexbatter26650(n=1){
-    flexbatter(n=n,l=65.5,d=26.4,hf=0.75,shd=3,eps=0.28);
+module flexbatter26650(n=1,ew=0.56){
+    flexbatter(n=n,ew=ew,l=65.5,d=26.4,hf=0.75,shd=3,eps=0.28);
 }
 
 module flexbatter26650P(n=1){
@@ -313,7 +326,8 @@ module flexbatterAAAx4(){ // AUTO_MAKE_STL
 }
 */
 
-flexbatter32650(n=1);
+//flexbatter32650(n=1);
+flexbatter(n=1,ew=0.8,l=65.3,d=26.4,hf=0.75,shd=0,eps=0, bulges=false, symbols=false, wire_channel=false);
 //flexbatter18650(n=1);
 
 // uncomment as needed:
