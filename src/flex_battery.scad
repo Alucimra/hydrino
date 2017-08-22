@@ -92,7 +92,7 @@ module sline(angle,radius,i,w,h){
 //  FLEXBATTER:  Flexing battery holder with integrated plastic spring
 //
 //////////////////////////////////////////////////////////////////////////////////
-module flexbatter(n=1,l=65,d=18,hf=0.75,r=4,shd=3,eps=0.28,el=0,ew=0.56, xchan=[1/4,3/4],bulges=true,symbols=true,wire_channel=true,$fn=24){
+module flexbatter(n=1,l=65,d=18,hf=0.75,r=4,shd=3,eps=0.28,el=0,ew=0.56, xchan=[1/4,3/4],bulges=true,symbols=true,wire_channel=true,chamfer=true, $fn=50){
 //ew=0.56;   // extrusion width
 eh=0.25;   // extrusion height
 w = 4*ew;  // case wall thickness
@@ -113,8 +113,13 @@ r = d/5+2*ws; // linear spring length (depends on sline() call!)
          union(){
             difference(){
                // main body
-               translate([0,-w-d/2,0])
-	          chamfered_cube([l+w,d+2*w+(i<n-1?ws:0),hf*d+w+ch],ch);
+               translate([0,-w-d/2,0]){
+                   if(chamfer){
+                        chamfered_cube([l+w,d+2*w+(i<n-1?ws:0),hf*d+w+ch],ch);
+                   } else {
+                       cube([l+w,d+2*w+(i<n-1?ws:0),hf*d+w]);
+                   }
+               }
 	       // main cavity
                translate([-2,-d/2,w])cube([2+l,d,d+1]);
 	       // cavity for locating plastic spring
@@ -328,7 +333,7 @@ module flexbatterAAAx4(){ // AUTO_MAKE_STL
 */
 
 //flexbatter32650(n=1);
-flexbatter(n=1,ew=0.8,l=65.3,d=26.5,hf=0.75,shd=0,eps=0, bulges=false, symbols=false, wire_channel=false);
+flexbatter(n=1,ew=0.8,l=65.3,d=26.5,hf=0.75,shd=0,eps=0, bulges=false, symbols=false, wire_channel=false, chamfer=false);
 //flexbatter18650(n=1);
 
 // uncomment as needed:
