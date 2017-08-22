@@ -124,7 +124,8 @@ r = d/5+2*ws; // linear spring length (depends on sline() call!)
             }
       
             // plastic spring for minus pole
-            for(sy=[-1,1])scale([1,sy,1])assign(D=d+2*w-2*ws-0.7){
+            for(sy=[-1,1])scale([1,sy,1]){
+                D=d+2*w-2*ws-0.7;
                translate([ch,d/2+w-ws/2,0])rotate(-90)
 		  //sline([90,0,120,90,120,90,0],[d/8+2,d/6,d/8-1,d/8,-d/8,d/8,d/2],0,ws,hf*d+w);
 		  sline([0,180,0,180,0,-180,0,90,0],[r+ch+el,D/4,el,D/12,el/2,D/12,1+el/2,D/5,D/3],0,ws,hf*d+w);
@@ -327,7 +328,7 @@ module flexbatterAAAx4(){ // AUTO_MAKE_STL
 */
 
 //flexbatter32650(n=1);
-flexbatter(n=1,ew=0.8,l=65.3,d=26.4,hf=0.75,shd=0,eps=0, bulges=false, symbols=false, wire_channel=false);
+flexbatter(n=1,ew=0.8,l=65.3,d=26.5,hf=0.75,shd=0,eps=0, bulges=false, symbols=false, wire_channel=false);
 //flexbatter18650(n=1);
 
 // uncomment as needed:
