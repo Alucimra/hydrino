@@ -48,8 +48,8 @@ volatile uint8_t sleep_for = 0;
 //const unsigned int sleep_cycle = 4090; // TCCR1B = 0x05; = 4.09s
 // when debugging, we can decrease the CYCLE_LENGTH so we don't have to wait
 // sleep time is based on sleep cycles, each of which is (currently) ~4.09s
-// which makes 15 cycles roughly 61.35 seconds (default: 14 at 4.09s)
-// or 7 at 8.18s
+// which makes 15 cycles roughly 61.35 seconds (default: 14 at 4.09s 16MHz)
+// or 7 at 8.18s 8MHz
 unsigned long CYCLE_LENGTH = 7;
 bool isDebugging = false;
 
@@ -78,6 +78,7 @@ void readLogs(){
   unsigned int i = 0;
   unsigned int value = 0;
   Serial.begin(9600);
+  Serial.print(":) Reading Logs");
   Serial.print(logPos);
   Serial.println();
 
@@ -109,7 +110,7 @@ void readLogs(){
     Serial.println();
     i++;
   }
-  Serial.print("Logs Read");
+  Serial.print(":) Read Logs");
 }
 
 void startup(){
