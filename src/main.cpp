@@ -29,7 +29,7 @@ const int CHARGED = 845; // 3.3v
 const int NOMINAL = 800; // 3.2v
 const int DRAINED = 770; // 3.1v
 const int CUTOFF = 750; // 3.0v
-const int TOLERANCE = 13; // 0.05v
+const int TOLERANCE = 26; // 13=0.05v
 
 // globals
 bool motorArunning = false;
@@ -50,6 +50,7 @@ volatile uint8_t sleep_for = 0;
 // sleep time is based on sleep cycles, each of which is (currently) ~4.09s
 // which makes 15 cycles roughly 61.35 seconds (default: 14 at 4.09s 16MHz)
 // or 7 at 8.18s 8MHz
+// Using CYCLE_LENGTH lets us set numbers in the loop as minutes
 unsigned long CYCLE_LENGTH = 7;
 bool isDebugging = false;
 
@@ -255,13 +256,13 @@ void loop(){
     } else if(cycle == 3){
       stopMotor(motorA);
       stopMotor(motorB);
-      cycle_time = 5;
+      cycle_time = 8;
     }
   } else if(power > CHARGED + TOLERANCE){
     if(cycle == 0 || cycle == 2){
       stopMotor(motorA);
       stopMotor(motorB);
-      cycle_time = 9;
+      cycle_time = 5;
     } else if(cycle == 1){
       runMotor(motorA, WEAK);
       stopMotor(motorB);
@@ -273,7 +274,7 @@ void loop(){
     if(cycle == 0 || cycle == 2){
       stopMotor(motorA);
       stopMotor(motorB);
-      cycle_time = 19;
+      cycle_time = 9;
     } else if(cycle == 1){
       runMotor(motorA, WEAK);
       stopMotor(motorB);
@@ -285,7 +286,7 @@ void loop(){
     if(cycle == 0 || cycle == 2){
       stopMotor(motorA);
       stopMotor(motorB);
-      cycle_time = 29;
+      cycle_time = 19;
     } else if(cycle == 1){
       runMotor(motorA, WEAK);
       stopMotor(motorB);
