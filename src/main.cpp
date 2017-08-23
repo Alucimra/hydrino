@@ -83,30 +83,32 @@ void readLogs(){
   Serial.print(logPos);
   Serial.println();
 
+  Serial.print(":: Markers :> ");
   while(i < logStart){
-    Serial.print(i);
-    Serial.print('=');
     Serial.print(EEPROM.read(i++));
     Serial.print("\t");
   }
   Serial.println();
-
+  /* Log data in tsv format. The format is:
+   * odds: i  aRead/4  voltage
+   * evens: i  cycle  cycle_time
+   * There's the expectation that odd cycle_time (except 1) means an off cycle
+   */
   while(i < logPos){
     Serial.print(i);
     Serial.print("\t");
     value = EEPROM.read(i);
     if(i % 2 == 0){
       // even numbered sequences are cycles
-      Serial.print("cycle: ");
+      Serial.print("\t");
       Serial.print(value % 4);
-      Serial.print("\tcycle_time: ");
+      Serial.print("\t");
       Serial.print(value >> 2);
     } else  {
       // odd number sequences is the power
       Serial.print(value);
-      Serial.print('=');
-      Serial.print(0.015686*value);
-      Serial.print('v');
+      Serial.print("\t");
+      Serial.print(0.016*value);
     }
     Serial.println();
     i++;
@@ -256,7 +258,7 @@ void loop(){
     } else if(cycle == 3){
       stopMotor(motorA);
       stopMotor(motorB);
-      cycle_time = 8;
+      cycle_time = 9;
     }
   } else if(power > CHARGED + TOLERANCE){
     if(cycle == 0 || cycle == 2){
@@ -309,7 +311,7 @@ void loop(){
   } else {
     stopMotor(motorA);
     stopMotor(motorB);
-    cycle_time = 20;
+    cycle_time = 21;
   }
   saveCycle(power / 4, cycle_time);
 
