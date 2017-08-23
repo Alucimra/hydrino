@@ -133,14 +133,14 @@ r = d/5+2*ws; // linear spring length (depends on sline() call!)
                 D=d+2*w-2*ws-0.7;
                translate([ch,d/2+w-ws/2,0])rotate(-90)
 		  //sline([90,0,120,90,120,90,0],[d/8+2,d/6,d/8-1,d/8,-d/8,d/8,d/2],0,ws,hf*d+w);
-		  sline([0,180,0,180,0,-180,0,90,0],[r+ch+el,D/4,el,D/12,el/2,D/12,1+el/2,D/5,D/3],0,ws,hf*d+w);
+		  sline([0,180,0,180,0,-180,0,90,0],[r+ch+el,(D-ws)/4,el,D/12,el/2,D/12,1+el/2,D/5,D/3],0,ws,hf*d+w);
 
 
             }
          }
       
          // lower and upper holes for contacts
-         for(z=[-4*ws,-ws])
+         for(z=[-3*ws, -0.5*ws])
             translate([-2*ws,-w,w-ws/2+d/2+z])
          cube([l+2*w+2,2*w,ws]);
          
