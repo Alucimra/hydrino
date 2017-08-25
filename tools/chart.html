@@ -15,7 +15,8 @@
       <form>
         <div class="form-group">
           <textarea class="form-control" id="logs" rows=10></textarea>
-          <input type="button" id="graph" class="btn" value="Charge Remaining" />
+          <input type="button" id="charge_remaining" class="btn" value="Charge Remaining" />
+          <input type="button" id="on_off_times" class="btn" value="On/Off Times" />
         </div>
         <div class="form-group">
           <label>X</label>
@@ -32,7 +33,7 @@
       $(function(){
         $chart = $('#chart');
         //var chart = new Chart($chart[0], {type: 'bubble', data: []});
-        $('#graph').click(function(){
+        $('#charge_remaining').click(function(){
           var x = [];
           var y = [];
           var time = 0;
@@ -40,11 +41,11 @@
             var data = line.split("\t");
             if(Number(data[0]) % 2 == 1){
               // odd, so read voltage
-              y.push(Number(data[1].match(/=([\d\.]+)v/)[1]));
+              y.push(Number(data[2]));
             } else {
               // even, so read time
               x.push(time);
-              time += Number(data[2].match(/: ([\d]+)/)[1]);
+              time += Number(data[2]);
             }
           });
 
@@ -59,7 +60,11 @@
           window.data = data;
           window.x = x;
           window.y = y;
-          chart = new Chart($chart[0], {type: 'scatter', data: {datasets: [{label: 'Charge Remaining', data: data}]}} );
+          chart = new Chart($chart[0], {type: 'polarArea', data: {datasets: [{label: 'Charge Remaining', data: y}]}} );
+        });
+
+        $('#on_off_times').click(function(){
+
         });
       });
     </script>

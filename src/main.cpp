@@ -89,7 +89,10 @@ void readLogs(){
     Serial.print("\t");
   }
   Serial.println();
-  /* Log data in tsv format. The format is:
+  /* Log data in tsv format.
+   * Format is:
+   * <even_number>\t<cycle>\t<cycle_time>
+   * <odd_number>\t<aRead>\t<voltage>
    * odds: i  aRead/4  voltage
    * evens: i  cycle  cycle_time
    * There's the expectation that odd cycle_time (except 1) means an off cycle
@@ -100,7 +103,6 @@ void readLogs(){
     value = EEPROM.read(i);
     if(i % 2 == 0){
       // even numbered sequences are cycles
-      Serial.print("\t");
       Serial.print(value % 4);
       Serial.print("\t");
       Serial.print(value >> 2);
@@ -222,6 +224,8 @@ void saveCycle(uint8_t power, uint8_t cycle_time){
 // by the time the sun starts shining (and recharging the battery).
 // This will be affected by total sunlight (seasonal) and the battery, so will
 // likely need seasonal updates.
+// There's the expectation that odd cycle_time (except 1) means an off cycle.
+// This expectation is used for graphing. See tools/chart.html
 void loop(){
   while(sleep_for > 0){ sleep_mode(); }
 

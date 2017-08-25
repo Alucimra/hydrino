@@ -1,0 +1,27 @@
+# Voltage vs Time graph (Charge remaining)
+
+Needs to convey voltage changes over time.
+
+A Scatter plot is the basic obvious answer. A heatmap is one step up.
+
+Heatmap
+http://bl.ocks.org/oyyd/859fafc8122977a3afd6
+
+Calendar heatmap
+https://bl.ocks.org/joshua-golub/2f7a5cc3be8f1f3a170bacdeebb987b5/eb68f534fde5d07c424e26a88767d0efed454e81
+
+Bar Chart with positive/negative (negative being battery on, positive being off?)
+https://bl.ocks.org/mbostock/2368837
+
+Aster Plot in D3 (differentially sized pie chart)
+http://bl.ocks.org/bbest/2de0e25d4840c68f2db1
+
+Condegram Spiral Plot
+https://bl.ocks.org/arpitnarechania/027e163073864ef2ac4ceb5c2c0bf616
+
+Event Drops (Time Series). Size of bars denote how much voltage is left. Maybe also color.
+https://marmelab.com/EventDrops/
+
+* Can also reuse event drops to do some of the others, so like a summary of them all in one chart.
+
+#
