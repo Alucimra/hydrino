@@ -115,7 +115,28 @@ void readLogs(){
     Serial.println();
     i++;
   }
-  Serial.print(":) Read Logs");
+  Serial.print(":) Reading complete");
+
+  while(i < EEPROM.length()){
+   Serial.print(i);
+   Serial.print("\t");
+   value = EEPROM.read(i);
+   if(i % 2 == 0){
+     // even numbered sequences are cycles
+     Serial.print(value % 4);
+     Serial.print("\t");
+     Serial.print(value >> 2);
+   } else  {
+     // odd number sequences is the power
+     Serial.print(value);
+     Serial.print("\t");
+     Serial.print(0.016*value);
+   }
+   Serial.println();
+   i++;
+  }
+
+  Serial.print(":) Done");
 }
 
 void startup(){
@@ -232,12 +253,18 @@ void loop(){
   uint8_t cycle_time = 1;
   int power = 0;
 
-  // TODO: Turn motors off while we check power? (current draw affects readings)
+  // Current draw of motors affects voltage readings by 0.01-0.05v
+  // It's not big, but I want to see if the analogRead numbers are more stable
+  // with the voltage being read with motors off. Also lets us remove all the
+  // stopMotor() calls inside the cycles, hopefully saves a few bytes
+  stopMotor(motorA);
+  stopMotor(motorB);
+  delay(500);
 
   digitalWrite(POWER_ACTIVATE, HIGH);
-  delay(250);
+  delay(300);
   power = analogRead(POWER_CHECK);
-  delay(250);
+  delay(200);
   digitalWrite(POWER_ACTIVATE, LOW);
 
   if(power > SOLAR + TOLERANCE){
@@ -249,72 +276,48 @@ void loop(){
   } else if(power > FULL + TOLERANCE){
     if(cycle == 0){
       runMotor(motorA, STRONG);
-      stopMotor(motorB);
       cycle_time = 2;
     } else if(cycle == 1){
-      runMotor(motorA, WEAK);
-      runMotor(motorB, WEAK);
-      cycle_time = 1;
+      cycle_time = 3;
     } else if(cycle == 2){
-      stopMotor(motorA);
       runMotor(motorB, STRONG);
       cycle_time = 2;
     } else if(cycle == 3){
-      stopMotor(motorA);
-      stopMotor(motorB);
-      cycle_time = 9;
+      cycle_time = 7;
     }
   } else if(power > CHARGED + TOLERANCE){
     if(cycle == 0 || cycle == 2){
-      stopMotor(motorA);
-      stopMotor(motorB);
       cycle_time = 5;
     } else if(cycle == 1){
       runMotor(motorA, WEAK);
-      stopMotor(motorB);
     } else if(cycle == 3){
-      stopMotor(motorA);
       runMotor(motorB, WEAK);
     }
   } else if(power > NOMINAL - TOLERANCE){
     if(cycle == 0 || cycle == 2){
-      stopMotor(motorA);
-      stopMotor(motorB);
       cycle_time = 9;
     } else if(cycle == 1){
       runMotor(motorA, WEAK);
-      stopMotor(motorB);
     } else if(cycle == 3){
-      stopMotor(motorA);
       runMotor(motorB, WEAK);
     }
   } else if(power > DRAINED - TOLERANCE){
     if(cycle == 0 || cycle == 2){
-      stopMotor(motorA);
-      stopMotor(motorB);
       cycle_time = 19;
     } else if(cycle == 1){
       runMotor(motorA, WEAK);
-      stopMotor(motorB);
     } else if(cycle == 3){
-      stopMotor(motorA);
       runMotor(motorB, WEAK);
     }
   } else if(power > CUTOFF){
     if(cycle == 0 || cycle == 2){
-      stopMotor(motorA);
-      stopMotor(motorB);
       cycle_time = 59;
     } else if(cycle == 1){
       runMotor(motorA, WEAK);
-      stopMotor(motorB);
     } else if(cycle == 3){
-      stopMotor(motorA);
       runMotor(motorB, WEAK);
     }
   } else {
-    stopMotor(motorA);
-    stopMotor(motorB);
     cycle_time = 21;
   }
   saveCycle(power / 4, cycle_time);
