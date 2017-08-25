@@ -22,6 +22,19 @@ https://bl.ocks.org/arpitnarechania/027e163073864ef2ac4ceb5c2c0bf616
 Event Drops (Time Series). Size of bars denote how much voltage is left. Maybe also color.
 https://marmelab.com/EventDrops/
 
+Kagi looks fancy, I think it has a nice correlation with the randomness of stocks.
+https://arpitnarechania.github.io/d3-kagi/
+
 * Can also reuse event drops to do some of the others, so like a summary of them all in one chart.
 
-#
+# Cycle on/off
+
+A Gant Chart seems like a good fit at first, but the time distribution makes it less useful (1m on to 19m off is too much of a disparity)
+http://bl.ocks.org/dk8996/5538271
+
+
+# Problems
+
+A lot of these charts are old. Created with d3 version 3, but the current d3 is version 4. So lots of it is kind of broken.
+
+nv.d3 was nice, but seems improperly maintained. The code in the docs is not the stuff being run. Can't get the multiBarChart to work.

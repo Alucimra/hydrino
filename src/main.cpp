@@ -122,7 +122,7 @@ void printVoltageLevels(){
 }
 
 void printConfig(){
-  Serial.print(":) Config :> {cycle_length:");
+  Serial.print(":: Config :> {cycle_length:");
   Serial.print(CYCLE_LENGTH);
   Serial.print(",motorA:");
   Serial.print(MOTOR_A);
@@ -141,7 +141,7 @@ void printConfig(){
 }
 
 void printMotorLevels(){
-  Serial.print(":) Motor Power Levels :> {motorStartWait:");
+  Serial.print(":: Motor Power Levels :> {motorStartWait:");
   Serial.print(MOTOR_START_WAIT);
   Serial.print(",max:");
   Serial.print(MAX);
@@ -151,6 +151,23 @@ void printMotorLevels(){
   Serial.print(WEAK);
   Serial.print(",off:");
   Serial.print(OFF);
+  Serial.print("}");
+  Serial.println();
+  // Hard coded for now, since it's tricky to do it otherwise
+  Serial.print(":: Motor Timing :> {\"");
+  Serial.print(SOLAR+TOLERANCE);
+  Serial.print("\":\"AB AB AB AB\",\"");
+  Serial.print(FULL+TOLERANCE);
+  Serial.print("\":\"*3 A2 *7 B2\",\"");
+  Serial.print(CHARGED+TOLERANCE);
+  Serial.print("\":\"*5 a *5 b\",\"");
+  Serial.print(NOMINAL-TOLERANCE);
+  Serial.print("\":\"*9 a *9 b\",\"");
+  Serial.print(DRAINED-TOLERANCE);
+  Serial.print("\":\"*19 a *19 b\",\"");
+  Serial.print(CUTOFF);
+  Serial.print("\":\"*59 a *59 b\",\"");
+  Serial.print("0\":\"*21 *21 *21 *21\"");
   Serial.print("}");
   Serial.println();
 }
@@ -176,7 +193,7 @@ void readDrive(){
   unsigned int bytes_to_read = SAVE_TO_DRIVE_AT*EEPROM.read(2);
   unsigned int read = 0;
 
-  Serial.print(":) Drive Config :> {logStart:");
+  Serial.print(":: Drive Config :> {logStart:");
   Serial.print(logStart);
   Serial.print(",driveId:");
   Serial.print(DRIVE_ID);

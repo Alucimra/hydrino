@@ -7,7 +7,7 @@
     <script src="./js/popper-utils.min.js"></script>
     <script src="./bootstrap-4.0.0b/js/bootstrap.min.js"></script>
     <script src="./js/d3.min.js"></script>
-    <script src="./js/nv.d3.min.js"></script>
+    <script src="./js/nv.d3-old.js"></script>
     <link rel="stylesheet" href="./bootstrap-4.0.0b/css/bootstrap.min.css"/>
     <link rel="stylesheet" href="./css/nv.d3.min.css"/>
   </head>
@@ -33,47 +33,64 @@
         </div>
       </form>
     </div>
+    <script src="./logs.js"></script>
     <script>
       var $chart, chart;
       var parsedData = {};
+
+      function parseConfig(logs, matcher){
+        var config;
+        var match;
+        try {
+          if(match = logs.match(matcher)){
+            config = JSON.parse(match[1]);
+          } else {
+            config = null;
+          }
+        } catch(e){
+          console.log(e);
+        }
+        return config;
+      }
+
       function parseData(){
         if(parsedData.parsedAt){ return; }
 
-        var total_time = [];
-        var volts = [];
-        var cycle_time = [];
+        parsedData.total_time = [];
+        parsedData.power = [];
+        parsedData.volts = [];
+        parsedData.cycle_time = [];
+        parsedData.cycles = [];
         var time = 0;
         var logs = $('#logs').val();
-        parsedData.voltage_levels = JSON.parse(logs.match(/:: Voltage Levels :> ({.+})/)[1]);
-        // SOLAR + TOLERANCE = AB AB AB AB
-// FULL + TOLERANCE = *3 A2 *7 B2
-// CHARGED + TOLERANCE = *5 a1 *5 b1
-// NOMINAL - TOLERANCE = *9 a1 *9 b1
-// DRAINED - TOLERANCE = *19 a1 *19 b1
-// CUTOFF = *59 a1 *59 b1
-// DEFAULT = *21 *21 *21 *21
+        // printing these fields cost >4kb of program memory space!
+        // have to figure out how to make use of it...
+        parsedData.voltage_levels = parseConfig(logs, /:: Voltage Levels :> ({.+})/);
+        parsedData.motor_timings = parseConfig(logs, /:: Motor Timing :> ({.+})/);
+        parsedData.motor_power_levels = parseConfig(logs, /:: Motor Power Levels :> ({.+})/);
+        parsedData.config = parseConfig(logs, /:: Config :> ({.+})/);
+        parsedData.drive_config = parseConfig(logs, /:: Drive Config :> ({.+})/);
+
         $.each(logs.split("\n"), function(i, line){
           var data = line.split("\t");
           if(data.length != 3){ return; }
 
           if(Number(data[0]) % 2 == 1){
-            // odd, so read voltage
-            volts.push(Number(data[2]));
+            // odd, read voltage
+            parsedData.power.push(Number(data[1]));
+            parsedData.volts.push(Number(data[2]));
           } else {
-            // even, so read time
-            cycle_time.push(Number(data[2]));
-            total_time.push(time);
+            // even, read time
+            parsedData.cycle_time.push(Number(data[2]));
+            parsedData.total_time.push(time);
+            parsedData.cycles.push(Number(data[1]));
             time += Number(data[2]);
           }
         });
-        parsedData.total_time = total_time;
-        parsedData.volts = volts;
-        parsedData.cycle_time = cycle_time;
         parsedData.parsedAt = new Date();
 
-
-        $('#x').val('time <- c(' + total_time.join(',') + ')');
-        $('#y').val('volts <- c(' + volts.join(',') + ')');
+        $('#x').val('time <- c(' + parsedData.total_time.join(',') + ')');
+        $('#y').val('volts <- c(' + parsedData.volts.join(',') + ')');
       }
 
       function clearChart(){
@@ -118,6 +135,20 @@
         window.chart = chart;
       }
 
+      function cycleData(wrap){
+        wrap || (wrap = 0);
+        var data = [{key: 'Cycle 0', values: []},
+          {key: 'Cycle 1', values: []},
+          {key: 'Cycle 2', values: []},
+          {key: 'Cycle 3', values: []}];
+
+        $.each(parsedData.cycles, function(i, val){
+          data[val].values.push({x: Math.floor(i/4), y: parsedData.cycle_time[i]});
+        });
+
+        return data;
+      }
+
       $(function(){
         $chart = $('#chart');
 
@@ -129,14 +160,27 @@
           charge_remaining_scatter(0);
         });
 
-
-
         $('#charge_remaining_wrap').click(function(){
           charge_remaining_scatter(1440);
         });
 
         $('#on_off_times').click(function(){
+          parseData();
+          clearChart();
+          var chart = nv.models.multiBarChart()
+            .margin({top: 50, bottom: 30, left: 40, right: 10});;
 
+
+          chart.xAxis.tickFormat(d3.format(',f'));
+          chart.yAxis.tickFormat(d3.format(',.1f'));
+
+          d3.select('#chart svg')
+              .datum(cycleData()).transition().duration(500)
+              .call(chart);
+
+          nv.utils.windowResize(chart.update);
+
+          window.chart = chart;
         });
       });
     </script>
