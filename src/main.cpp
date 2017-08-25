@@ -2,6 +2,7 @@
 #include <EEPROM.h>
 #include <avr/power.h>
 #include <avr/sleep.h>
+#include <Wire.h>
 
 // Pins
 #define MOTOR_A A1
@@ -10,6 +11,12 @@
 #define POWER_ACTIVATE 11
 #define LOG_RESET 9
 #define DEBUG_PIN 8
+
+// Drive info (AT24C32)
+#define DRIVE_ID 0x50
+#define SAVE_TO_DRIVE_AT 1000
+#define DRIVE_SPACE 32768
+#define DRIVE_WRITE_LIMIT 25
 
 // motor power Levels
 const uint8_t MAX = 255; // 1023/1023
@@ -38,8 +45,8 @@ uint8_t cycle = 0;
 const bool motorA = true;
 const bool motorB = false;
 
-// we have 1024 bytes of EEPROM and will be using 512 bytes for log storage.
-// marker at position 0 tells us where we are.
+// we have 1024 bytes of EEPROM
+// marker at position 0 and 1 tells us where we are, 2 is for extra storage
 unsigned int logPos = 3; // first two bytes is reserved for logPointer
 unsigned int logStart = 3;
 
@@ -63,6 +70,22 @@ ISR(TIMER1_OVF_vect){
 void clearLogs(){
   for (unsigned int i = 0 ; i < EEPROM.length() ; i++) {
     EEPROM.write(i, 0);
+  }
+}
+
+void clearDrive(){
+  unsigned int written = 0;
+
+  while(written < DRIVE_SPACE){
+    Wire.beginTransmission(DRIVE_ID);
+    Wire.write(written >> 8);
+    Wire.write(written & 0xFF);
+    for(uint8_t i=0; i < DRIVE_WRITE_LIMIT; i++){
+      Wire.write(0);
+      written++;
+    }
+    Wire.endTransmission();
+    delay(20); // with the 20ms delay, it takes ~26.2 seconds to clear the drive
   }
 }
 
@@ -132,9 +155,62 @@ void printMotorLevels(){
   Serial.println();
 }
 
+void printLogEntry(unsigned int i, uint8_t value){
+  Serial.print(i);
+  Serial.print("\t");
+  if(i % 2 == 0){
+    // even numbered sequences are cycles
+    Serial.print(value % 4);
+    Serial.print("\t");
+    Serial.print(value >> 2);
+  } else  {
+    // odd number sequences is the power
+    Serial.print(value);
+    Serial.print("\t");
+    Serial.print(0.016*value);
+  }
+  Serial.println();
+}
+
+void readDrive(){
+  unsigned int bytes_to_read = SAVE_TO_DRIVE_AT*EEPROM.read(2);
+  unsigned int read = 0;
+
+  Serial.print(":) Drive Config :> {logStart:");
+  Serial.print(logStart);
+  Serial.print(",driveId:");
+  Serial.print(DRIVE_ID);
+  Serial.print(",driveSpace:");
+  Serial.print(DRIVE_SPACE);
+  Serial.print(",saveToDriveAt:");
+  Serial.print(SAVE_TO_DRIVE_AT);
+  Serial.print(",driveWriteLimit:");
+  Serial.print(DRIVE_WRITE_LIMIT);
+  Serial.print("}");
+  Serial.println();
+  Serial.print(":) Reading from Drive");
+  Serial.println();
+
+  while(read < bytes_to_read){
+    //TODO: Do we need to begin a transmission before making request?
+    Wire.beginTransmission(DRIVE_ID);
+    Wire.write(read >> 8);
+    Wire.write(read & 0xFF);
+    Wire.endTransmission();
+    delay(10);
+    Wire.requestFrom(DRIVE_ID, 30); // only read 30 bytes at a time
+    while(Wire.available()){
+      printLogEntry(read, Wire.read());
+      read++;
+    }
+    delay(10);
+  }
+
+}
+
 void readLogs(){
   unsigned int i = 0;
-  unsigned int value = 0;
+  //unsigned int value = 0;
   Serial.begin(9600);
   printConfig();
   printVoltageLevels();
@@ -161,45 +237,18 @@ void readLogs(){
    * TODO: We can remove this expectation by adding a column (calculate below)
    */
   while(i < logPos){
-    Serial.print(i);
-    Serial.print("\t");
-    value = EEPROM.read(i);
-    if(i % 2 == 0){
-      // even numbered sequences are cycles
-      Serial.print(value % 4);
-      Serial.print("\t");
-      Serial.print(value >> 2);
-    } else  {
-      // odd number sequences is the power
-      Serial.print(value);
-      Serial.print("\t");
-      Serial.print(0.016*value);
-    }
-    Serial.println();
+    printLogEntry(i, EEPROM.read(i));
     i++;
   }
-  Serial.print(":) Reading complete");
+  Serial.print(":) Reading leftovers");
 
   while(i < EEPROM.length()){
-   Serial.print(i);
-   Serial.print("\t");
-   value = EEPROM.read(i);
-   if(i % 2 == 0){
-     // even numbered sequences are cycles
-     Serial.print(value % 4);
-     Serial.print("\t");
-     Serial.print(value >> 2);
-   } else  {
-     // odd number sequences is the power
-     Serial.print(value);
-     Serial.print("\t");
-     Serial.print(0.016*value);
-   }
-   Serial.println();
-   i++;
+    printLogEntry(i, EEPROM.read(i));
+    i++;
   }
 
   Serial.print(":) Done");
+  readDrive();
 }
 
 void startup(){
@@ -282,17 +331,45 @@ void stopMotor(bool useMotorA){
   }
 }
 
+void saveToDrive(){
+  power_twi_enable();
+  delay(1000);
+  uint8_t marker = EEPROM.read(2);
+
+  if(SAVE_TO_DRIVE_AT*(marker+1) > DRIVE_SPACE){ return; } // the drive is full!
+
+  unsigned int address = SAVE_TO_DRIVE_AT*marker;
+  unsigned int written = 0;
+
+  while(written < 1000){
+    Wire.beginTransmission(DRIVE_ID);
+    Wire.write((address+written) >> 8);
+    Wire.write((address+written) & 0xFF);
+    for(uint8_t i=0; i < DRIVE_WRITE_LIMIT; i++){
+      Wire.write(EEPROM.read(written+logStart));
+      written++;
+    }
+    // NOTE: i2c transmissions are limited to 32 bytes, first 2 is used for addr
+    // so we can only write 30 bytes max in the loop above.
+    Wire.endTransmission();
+    delay(20);
+  }
+  EEPROM.write(2, marker+1);
+  power_twi_disable();
+}
+
 void saveCycle(uint8_t power, uint8_t cycle_time){
   // don't save data when we're debugging
   if(isDebugging){ return; }
 
   // we save the power on odd byte, then cycle+cycle_time next (even)
-  // NOTE: power has been scaled down from 1023 to 255 to save space, low res
+  // NOTE: power has been scaled down from 1023 to 255 to save space, lost res
 
   // this should not happen...we should always be on an odd byte when called
   if(logPos % 2 == 0){ logPos++; }
 
   // we will overflow, cycle back around to the start
+  // this shouldn't happen with the extra drive backup in place
   if((logPos + 2) >= EEPROM.length()){ logPos = logStart; }
 
   uint8_t cycling = (cycle_time << 2) + cycle;
@@ -302,6 +379,13 @@ void saveCycle(uint8_t power, uint8_t cycle_time){
   EEPROM.write(0, (uint8_t)(logPos >> 8));
   EEPROM.write(1, (uint8_t)(logPos));
   delay(500);
+
+  if(logPos == SAVE_TO_DRIVE_AT+logStart){
+    // we wrote 1000 bytes (500 cycles) save to drive
+    saveToDrive();
+    // and then cycle back to the beginning for the logs
+    logPos = logStart;
+  }
 }
 
 // cycle_time should be tweaked so that the battery should be around 3.0v
