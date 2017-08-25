@@ -20,6 +20,7 @@
         <div class="form-group">
           <textarea class="form-control" id="logs" rows=10></textarea>
           <input type="button" id="charge_remaining" class="btn" value="Charge Remaining (Scatterplot)" />
+          <input type="button" id="charge_remaining_wrap" class="btn" value="Charge Remaining (Scatterplot - 24hr)" />
           <input type="button" id="on_off_times" class="btn" value="On/Off Times" />
         </div>
         <div class="form-group">
@@ -38,8 +39,9 @@
       function parseData(){
         if(parsedData.x && parsedData.y){ return; }
 
-        var x = [];
-        var y = [];
+        var total_time = [];
+        var volts = [];
+        var cycle_time = [];
         var time = 0;
         $.each($('#logs').val().split("\n"), function(i, line){
           var data = line.split("\t");
@@ -47,18 +49,63 @@
 
           if(Number(data[0]) % 2 == 1){
             // odd, so read voltage
-            y.push(Number(data[2]));
+            volts.push(Number(data[2]));
           } else {
             // even, so read time
-            x.push(time);
+            cycle_time.push(Number(data[2]));
+            total_time.push(time);
             time += Number(data[2]);
           }
         });
-        parsedData.x = x;
-        parsedData.y = y;
+        parsedData.total_time = total_time;
+        parsedData.volts = volts;
+        parsedData.cycle_time = cycle_time;
 
-        $('#x').val('time <- c(' + x.join(',') + ')');
-        $('#y').val('volts <- c(' + y.join(',') + ')');
+
+        $('#x').val('time <- c(' + total_time.join(',') + ')');
+        $('#y').val('volts <- c(' + volts.join(',') + ')');
+      }
+
+      function clearChart(){
+        $chart.find('svg').children().remove();
+      }
+
+      function scatterData(wrap){
+        wrap || (wrap = 0);
+
+        var scatterData = [],
+            shapes = ['circle', 'square', 'triangle-up', 'triangle-down', 'diamond', 'cross'];
+        scatterData.push({key: 'On Cycle', values: []});
+        scatterData.push({key: 'Off Cycle', values: []});
+        $.each(parsedData.total_time, function(i, val){
+          if(wrap > 0){ val = val % wrap; }
+          if(parsedData.cycle_time[i] % 2 == 0 || parsedData.cycle_time[i] == 1){
+            // even cycle_time or 1 means the cycle is on
+            scatterData[0].values.push({x: val, y: parsedData.volts[i], size: parsedData.cycle_time[i], shape: 'circle'});
+          } else {
+            // odd cycle, so it's off
+            scatterData[1].values.push({x: val, y: parsedData.volts[i], size: parsedData.cycle_time[i], shape: 'square'});
+          }
+        });
+
+        return scatterData;
+      }
+
+      function charge_remaining_scatter(wrap){
+        parseData();
+        clearChart();
+        // http://nvd3.org/examples/scatter.html
+        var chart = nv.models.scatterChart()
+                      .showDistX(false)
+                      .showDistY(false)
+                      .color(d3.scale.category10().range());
+
+        chart.xAxis.tickFormat(d3.format('.3s'));
+        chart.yAxis.tickFormat(d3.format('.2f'));
+
+        d3.select('#chart svg').datum(scatterData(wrap)).call(chart);
+        nv.utils.windowResize(chart.update);
+        window.chart = chart;
       }
 
       $(function(){
@@ -69,26 +116,13 @@
         });
 
         $('#charge_remaining').click(function(){
-          parseData();
-          // http://nvd3.org/examples/scatter.html
-          var chart = nv.models.scatterChart()
-                        .showDistX(false)
-                        .showDistY(false)
-                        .color(d3.scale.category10().range());
+          charge_remaining_scatter(0);
+        });
 
-          chart.xAxis.tickFormat(d3.format('.3s'));
-          chart.yAxis.tickFormat(d3.format('.2f'));
 
-          var scatterData = [],
-              shapes = ['circle', 'cross', 'triangle-up', 'triangle-down', 'diamond', 'square'];
-          scatterData.push({key: 'Voltage', values: []});
-          $.each(parsedData.x, function(i, val){
-            scatterData[0].values.push({x: val, y: parsedData.y[i], size: 1, shape: 'circle'});
-          });
 
-          d3.select('#chart svg').datum(scatterData).call(chart);
-          nv.utils.windowResize(chart.update);
-          window.chart = chart;
+        $('#charge_remaining_wrap').click(function(){
+          charge_remaining_scatter(1440);
         });
 
         $('#on_off_times').click(function(){
