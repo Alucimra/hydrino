@@ -75,10 +75,71 @@ void loadLogPosition(){
   if(logPos < logStart){ logPos = logStart; }
 }
 
+void printVoltageLevels(){
+  // TODO: Printing out this json is costing us over 900 bytes of program space.
+  // If it becomes a problem, we'll have to just switch to delimiters
+  Serial.print(":: Voltage Levels :> {overcharge:");
+  Serial.print(OVERCHARGE);
+  Serial.print(",solar:");
+  Serial.print(SOLAR);
+  Serial.print(",full:");
+  Serial.print(FULL);
+  Serial.print(",charged:");
+  Serial.print(CHARGED);
+  Serial.print(",nominal:");
+  Serial.print(NOMINAL);
+  Serial.print(",drained:");
+  Serial.print(DRAINED);
+  Serial.print(",cutoff:");
+  Serial.print(CUTOFF);
+  Serial.print(",tolerance:");
+  Serial.print(TOLERANCE);
+  Serial.print("}");
+  Serial.println();
+}
+
+void printConfig(){
+  Serial.print(":) Config :> {cycle_length:");
+  Serial.print(CYCLE_LENGTH);
+  Serial.print(",motorA:");
+  Serial.print(MOTOR_A);
+  Serial.print(",motorB:");
+  Serial.print(MOTOR_B);
+  Serial.print(",powerCheck:");
+  Serial.print(POWER_CHECK);
+  Serial.print(",powerActivate:");
+  Serial.print(POWER_ACTIVATE);
+  Serial.print(",logReset:");
+  Serial.print(LOG_RESET);
+  Serial.print(",debugPin:");
+  Serial.print(DEBUG_PIN);
+  Serial.print("}");
+  Serial.println();
+}
+
+void printMotorLevels(){
+  Serial.print(":) Motor Power Levels :> {motorStartWait:");
+  Serial.print(MOTOR_START_WAIT);
+  Serial.print(",max:");
+  Serial.print(MAX);
+  Serial.print(",strong:");
+  Serial.print(STRONG);
+  Serial.print(",weak:");
+  Serial.print(WEAK);
+  Serial.print(",off:");
+  Serial.print(OFF);
+  Serial.print("}");
+  Serial.println();
+}
+
 void readLogs(){
   unsigned int i = 0;
   unsigned int value = 0;
   Serial.begin(9600);
+  printConfig();
+  printVoltageLevels();
+  printMotorLevels();
+
   Serial.print(":) Reading Logs");
   Serial.print(logPos);
   Serial.println();
@@ -89,6 +150,7 @@ void readLogs(){
     Serial.print("\t");
   }
   Serial.println();
+
   /* Log data in tsv format.
    * Format is:
    * <even_number>\t<cycle>\t<cycle_time>
@@ -96,6 +158,7 @@ void readLogs(){
    * odds: i  aRead/4  voltage
    * evens: i  cycle  cycle_time
    * There's the expectation that odd cycle_time (except 1) means an off cycle
+   * TODO: We can remove this expectation by adding a column (calculate below)
    */
   while(i < logPos){
     Serial.print(i);
@@ -275,15 +338,15 @@ void loop(){
     runMotor(motorB, STRONG);
   } else if(power > FULL + TOLERANCE){
     if(cycle == 0){
+      cycle_time = 3;
+    } else if(cycle == 1){
       runMotor(motorA, STRONG);
       cycle_time = 2;
-    } else if(cycle == 1){
-      cycle_time = 3;
     } else if(cycle == 2){
+      cycle_time = 7;
+    } else if(cycle == 3){
       runMotor(motorB, STRONG);
       cycle_time = 2;
-    } else if(cycle == 3){
-      cycle_time = 7;
     }
   } else if(power > CHARGED + TOLERANCE){
     if(cycle == 0 || cycle == 2){

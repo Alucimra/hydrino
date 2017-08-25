@@ -37,13 +37,16 @@
       var $chart, chart;
       var parsedData = {};
       function parseData(){
-        if(parsedData.x && parsedData.y){ return; }
+        if(parsedData.parsedAt){ return; }
 
         var total_time = [];
         var volts = [];
         var cycle_time = [];
         var time = 0;
-        $.each($('#logs').val().split("\n"), function(i, line){
+        var logs = $('#logs').val();
+        parsedData.voltage_levels = JSON.parse(logs.match(/:: Voltage Levels :> ({.+})/)[1]);
+        
+        $.each(logs.split("\n"), function(i, line){
           var data = line.split("\t");
           if(data.length != 3){ return; }
 
@@ -60,6 +63,7 @@
         parsedData.total_time = total_time;
         parsedData.volts = volts;
         parsedData.cycle_time = cycle_time;
+        parsedData.parsedAt = new Date();
 
 
         $('#x').val('time <- c(' + total_time.join(',') + ')');
