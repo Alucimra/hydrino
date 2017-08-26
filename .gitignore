@@ -5,3 +5,5 @@
 .clang_complete
 .gcc-flags.json
 /build
+/tools/rawLog.js
+/tools/*.log

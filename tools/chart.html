@@ -74,10 +74,14 @@
         parsedData.config = parseConfig(logs, /:: Config :> ({.+})/);
         parsedData.drive_config = parseConfig(logs, /:: Drive Config :> ({.+})/);
 
+        var x = logs.split(":) Reading leftovers");
+        logs = x[1] +  x[0];
+
         $.each(logs.split("\n"), function(i, line){
           var data = line.split("\t");
-          if(data.length != 3){ return; }
+          if(line.length == 0 || line[0] == ':' || data.length != 3){ return; }
 
+          // TODO: Check if zero and skip
           if(Number(data[0]) % 2 == 1){
             // odd, read voltage
             parsedData.power.push(Number(data[1]));

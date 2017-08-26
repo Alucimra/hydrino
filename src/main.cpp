@@ -12,6 +12,9 @@
 #define LOG_RESET 9
 #define DEBUG_PIN 8
 
+// TODO: Since we'll be getting a DS1307 module with an included AT24C32, we
+// should implement the code to read the time
+
 // Drive info (AT24C32)
 // TODO: We could use this HAS_DRIVE preprocessor to skip function definitions
 // because we won't be calling them anyway.
@@ -104,55 +107,55 @@ void loadLogPosition(){
 void printVoltageLevels(){
   // TODO: Printing out this json is costing us over 900 bytes of program space.
   // If it becomes a problem, we'll have to just switch to delimiters
-  Serial.print(":: Voltage Levels :> {overcharge:");
+  Serial.print(":: Voltage Levels :> {\"overcharge\":");
   Serial.print(OVERCHARGE);
-  Serial.print(",solar:");
+  Serial.print(",\"solar\":");
   Serial.print(SOLAR);
-  Serial.print(",full:");
+  Serial.print(",\"full\":");
   Serial.print(FULL);
-  Serial.print(",charged:");
+  Serial.print(",\"charged\":");
   Serial.print(CHARGED);
-  Serial.print(",nominal:");
+  Serial.print(",\"nominal\":");
   Serial.print(NOMINAL);
-  Serial.print(",drained:");
+  Serial.print(",\"drained\":");
   Serial.print(DRAINED);
-  Serial.print(",cutoff:");
+  Serial.print(",\"cutoff\":");
   Serial.print(CUTOFF);
-  Serial.print(",tolerance:");
+  Serial.print(",\"tolerance\":");
   Serial.print(TOLERANCE);
   Serial.print("}");
   Serial.println();
 }
 
 void printConfig(){
-  Serial.print(":: Config :> {cycle_length:");
+  Serial.print(":: Config :> {\"cycle_length\":");
   Serial.print(CYCLE_LENGTH);
-  Serial.print(",motorA:");
+  Serial.print(",\"motorA\":");
   Serial.print(MOTOR_A);
-  Serial.print(",motorB:");
+  Serial.print(",\"motorB\":");
   Serial.print(MOTOR_B);
-  Serial.print(",powerCheck:");
+  Serial.print(",\"powerCheck\":");
   Serial.print(POWER_CHECK);
-  Serial.print(",powerActivate:");
+  Serial.print(",\"powerActivate\":");
   Serial.print(POWER_ACTIVATE);
-  Serial.print(",logReset:");
+  Serial.print(",\"logReset\":");
   Serial.print(LOG_RESET);
-  Serial.print(",debugPin:");
+  Serial.print(",\"debugPin\":");
   Serial.print(DEBUG_PIN);
   Serial.print("}");
   Serial.println();
 }
 
 void printMotorLevels(){
-  Serial.print(":: Motor Power Levels :> {motorStartWait:");
+  Serial.print(":: Motor Power Levels :> {\"motorStartWait\":");
   Serial.print(MOTOR_START_WAIT);
-  Serial.print(",max:");
+  Serial.print(",\"max\":");
   Serial.print(MAX);
-  Serial.print(",strong:");
+  Serial.print(",\"strong\":");
   Serial.print(STRONG);
-  Serial.print(",weak:");
+  Serial.print(",\"weak\":");
   Serial.print(WEAK);
-  Serial.print(",off:");
+  Serial.print(",\"off\":");
   Serial.print(OFF);
   Serial.print("}");
   Serial.println();
@@ -198,15 +201,15 @@ void readDrive(){
   power_twi_enable();
   delay(1000);
 
-  Serial.print(":: Drive Config :> {logStart:");
+  Serial.print(":: Drive Config :> {\"logStart\":");
   Serial.print(logStart);
-  Serial.print(",driveId:");
+  Serial.print(",\"driveId\":");
   Serial.print(DRIVE_ID);
-  Serial.print(",driveSpace:");
+  Serial.print(",\"driveSpace\":");
   Serial.print(DRIVE_SPACE);
-  Serial.print(",saveToDriveAt:");
+  Serial.print(",\"saveToDriveAt\":");
   Serial.print(SAVE_TO_DRIVE_AT);
-  Serial.print(",driveWriteLimit:");
+  Serial.print(",\"driveWriteLimit\":");
   Serial.print(DRIVE_WRITE_LIMIT);
   Serial.print("}");
   Serial.println();
@@ -238,7 +241,7 @@ void readLogs(){
   printVoltageLevels();
   printMotorLevels();
 
-  Serial.print(":) Reading Logs");
+  Serial.print(":) Reading Logs, last logPos: ");
   Serial.print(logPos);
   Serial.println();
 
@@ -263,6 +266,7 @@ void readLogs(){
     i++;
   }
   Serial.print(":) Reading leftovers");
+  Serial.println();
 
   while(i < EEPROM.length()){
     printLogEntry(i, EEPROM.read(i));
@@ -424,6 +428,11 @@ void saveCycle(uint8_t power, uint8_t cycle_time){
 // There's the expectation that odd cycle_time (except 1) means an off cycle.
 // This expectation is used for graphing. See tools/chart.html
 void loop(){
+  if(isDebugging){
+    // TODO: Loop a serial read (for commands) when isDebugging is activated.
+    return;
+  }
+
   while(sleep_for > 0){ sleep_mode(); }
 
   uint8_t cycle_time = 1;
