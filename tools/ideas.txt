@@ -4,6 +4,15 @@ Needs to convey voltage changes over time.
 
 A Scatter plot is the basic obvious answer. A heatmap is one step up.
 
+Scatter Plot
+https://bl.ocks.org/mbostock/3887118
+
+Tried the scatterplot and it works really well. Separate out the on-time and off-time with size and color and it really brings out the difference.
+Works as a voltage over time very well, wrapped around, it brings out differences between days.
+
+* The nvjs example does work for the scatter plot, which is how I tried it out...which means it should be simple to implement.
+
+
 Heatmap
 http://bl.ocks.org/oyyd/859fafc8122977a3afd6
 
@@ -34,6 +43,10 @@ http://bl.ocks.org/dk8996/5538271
 
 
 # Problems
+
+A problem with some of the charts here is that they're based off time-series data. We do have time series data, but we don't have an actual time object.
+
+We have duration. Time across some unknown dates.
 
 A lot of these charts are old. Created with d3 version 3, but the current d3 is version 4. So lots of it is kind of broken.
 

@@ -13,6 +13,9 @@
 #define DEBUG_PIN 8
 
 // Drive info (AT24C32)
+// TODO: We could use this HAS_DRIVE preprocessor to skip function definitions
+// because we won't be calling them anyway.
+#define HAS_DRIVE false
 #define DRIVE_ID 0x50
 #define SAVE_TO_DRIVE_AT 1000
 #define DRIVE_SPACE 32768
@@ -192,6 +195,8 @@ void printLogEntry(unsigned int i, uint8_t value){
 void readDrive(){
   unsigned int bytes_to_read = SAVE_TO_DRIVE_AT*EEPROM.read(2);
   unsigned int read = 0;
+  power_twi_enable();
+  delay(1000);
 
   Serial.print(":: Drive Config :> {logStart:");
   Serial.print(logStart);
@@ -222,7 +227,7 @@ void readDrive(){
     }
     delay(10);
   }
-
+  power_twi_disable();
 }
 
 void readLogs(){
@@ -265,7 +270,12 @@ void readLogs(){
   }
 
   Serial.print(":) Done");
+
+  // We're using a pre-processor directive below to skip calling the function
+  // if we don't have a drive in place.
+  #if(HAS_DRIVE)
   readDrive();
+  #endif
 }
 
 void startup(){
@@ -397,12 +407,14 @@ void saveCycle(uint8_t power, uint8_t cycle_time){
   EEPROM.write(1, (uint8_t)(logPos));
   delay(500);
 
+  #if(HAS_DRIVE)
   if(logPos == SAVE_TO_DRIVE_AT+logStart){
     // we wrote 1000 bytes (500 cycles) save to drive
     saveToDrive();
     // and then cycle back to the beginning for the logs
     logPos = logStart;
   }
+  #endif
 }
 
 // cycle_time should be tweaked so that the battery should be around 3.0v
