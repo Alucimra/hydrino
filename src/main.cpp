@@ -35,13 +35,15 @@ const int MOTOR_START_WAIT = 1000;
 // WARNING: Assumes internal reference voltage is 1.0v. See docs/voltage levels.txt
 // aRead = (battery_voltage / 4) / (1.0 / 1023)
 // battery_voltage = aRead * 4 * (1.0 / 1023)
-const int OVERCHARGE = 935; // >3.6v
-const int SOLAR = 920; // ~3.6v
-const int FULL = 870; // 3.4v
-const int CHARGED = 845; // 3.3v
-const int NOMINAL = 800; // 3.2v
-const int DRAINED = 770; // 3.1v
-const int CUTOFF = 750; // 3.0v
+// Real life read checks:
+// 225*4 = 900 = ~4.1v (8/26/17) vref = 1.165
+const int OVERCHARGE = 800; // >3.6v
+const int SOLAR = 790; // ~3.6v
+const int FULL = 746; // 3.4v
+const int CHARGED = 720; // 3.3v
+const int NOMINAL = 702; // 3.2v
+const int DRAINED = 680; // 3.1v
+const int CUTOFF = 660; // 3.0v
 const int TOLERANCE = 26; // 13=0.05v
 
 // globals
@@ -513,6 +515,16 @@ void actionLoop(){
 
 void debugLoop(){
   // TODO: Loop a serial read (for commands) when isDebugging is activated.
+  if(Serial.available() > 0){
+    switch(Serial.read()){
+      case 13 : // new line
+        readLogs();
+        break;
+      case 32 :
+        Serial.print(":) Yes, we are debugging.");
+        break;
+    }
+  }
   //readLogs();
 }
 
