@@ -162,7 +162,7 @@ void printMotorLevels(){
   // Hard coded for now, since it's tricky to do it otherwise
   Serial.print(":: Motor Timing :> {\"");
   Serial.print(SOLAR+TOLERANCE);
-  Serial.print("\":\"AB AB AB AB\",\"");
+  Serial.print("\":\"AB4 AB4 AB4 AB4\",\"");
   Serial.print(FULL+TOLERANCE);
   Serial.print("\":\"*3 A2 *7 B2\",\"");
   Serial.print(CHARGED+TOLERANCE);
@@ -456,6 +456,7 @@ void actionLoop(){
     // was put in to replace the old battery. We use up power to bring it back down.
     runMotor(motorA, STRONG);
     runMotor(motorB, STRONG);
+    cycle_time = 4;
   } else if(power > FULL + TOLERANCE){
     if(cycle == 0){
       cycle_time = 3;
