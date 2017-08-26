@@ -336,18 +336,18 @@ void setup(){
 }
 
 void runMotor(bool useMotorA, uint8_t power){
-  if(useMotorA && motorA){
+  if(useMotorA && motorArunning){
     // motor A - running - change the power level
     analogWrite(MOTOR_A, power);
-  } else if(!useMotorA && motorB){
+  } else if(!useMotorA && motorBrunning){
     // motor B - running - change the power Level
     analogWrite(MOTOR_B, power);
-  } else if(useMotorA && !motorA){
+  } else if(useMotorA && !motorArunning){
     analogWrite(MOTOR_A, MAX);
     delay(MOTOR_START_WAIT);
     analogWrite(MOTOR_A, power);
     motorArunning = true;
-  } else if(!useMotorA && !motorB){
+  } else if(!useMotorA && !motorBrunning){
     analogWrite(MOTOR_B, MAX);
     delay(MOTOR_START_WAIT);
     analogWrite(MOTOR_B, power);
