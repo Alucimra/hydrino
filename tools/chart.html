@@ -59,22 +59,24 @@
       function parseData(){
         if(parsedData.parsedAt){ return; }
 
-        parsedData.total_time = [];
+        parsedData.totalTime = [];
         parsedData.power = [];
         parsedData.volts = [];
-        parsedData.cycle_time = [];
+        parsedData.cycleTime = [];
         parsedData.cycles = [];
         var time = 0;
         var logs = ($('#logs').val().length == 0 ? window.rawLog : $('#logs').val());
         // printing these fields cost >4kb of program memory space!
         // have to figure out how to make use of it...
-        parsedData.voltage_levels = parseConfig(logs, /:: Voltage Levels :> ({.+})/);
-        parsedData.motor_timings = parseConfig(logs, /:: Motor Timing :> ({.+})/);
-        parsedData.motor_power_levels = parseConfig(logs, /:: Motor Power Levels :> ({.+})/);
+        parsedData.voltageLevels = parseConfig(logs, /:: Voltage Levels :> ({.+})/);
+        parsedData.motorTimings = parseConfig(logs, /:: Motor Timing :> ({.+})/);
+        parsedData.motorPowerLevels = parseConfig(logs, /:: Motor Power Levels :> ({.+})/);
         parsedData.config = parseConfig(logs, /:: Config :> ({.+})/);
-        parsedData.drive_config = parseConfig(logs, /:: Drive Config :> ({.+})/);
+        parsedData.driveConfig = parseConfig(logs, /:: Drive Config :> ({.+})/);
+        parsedData.reservedBytes = 
 
         var x = logs.split(":) Reading leftovers");
+
         logs = x[1] +  x[0];
 
         $.each(logs.split("\n"), function(i, line){
@@ -88,15 +90,15 @@
             parsedData.volts.push(Number(data[2]));
           } else {
             // even, read time
-            parsedData.cycle_time.push(Number(data[2]));
-            parsedData.total_time.push(time);
+            parsedData.cycleTime.push(Number(data[2]));
+            parsedData.totalTime.push(time);
             parsedData.cycles.push(Number(data[1]));
             time += Number(data[2]);
           }
         });
         parsedData.parsedAt = new Date();
 
-        $('#x').val('time <- c(' + parsedData.total_time.join(',') + ')');
+        $('#x').val('time <- c(' + parsedData.totalTime.join(',') + ')');
         $('#y').val('volts <- c(' + parsedData.volts.join(',') + ')');
       }
 
@@ -111,14 +113,14 @@
             shapes = ['circle', 'square', 'triangle-up', 'triangle-down', 'diamond', 'cross'];
         scatterData.push({key: 'On Cycle', values: []});
         scatterData.push({key: 'Off Cycle', values: []});
-        $.each(parsedData.total_time, function(i, val){
+        $.each(parsedData.totalTime, function(i, val){
           if(wrap > 0){ val = val % wrap; }
-          if(parsedData.cycle_time[i] % 2 == 0 || parsedData.cycle_time[i] == 1){
-            // even cycle_time or 1 means the cycle is on
-            scatterData[0].values.push({x: val, y: parsedData.volts[i], size: parsedData.cycle_time[i], shape: 'circle'});
+          if(parsedData.cycleTime[i] % 2 == 0 || parsedData.cycleTime[i] == 1){
+            // even cycleTime or 1 means the cycle is on
+            scatterData[0].values.push({x: val, y: parsedData.volts[i], size: parsedData.cycleTime[i], shape: 'circle'});
           } else {
             // odd cycle, so it's off
-            scatterData[1].values.push({x: val, y: parsedData.volts[i], size: parsedData.cycle_time[i], shape: 'square'});
+            scatterData[1].values.push({x: val, y: parsedData.volts[i], size: parsedData.cycleTime[i], shape: 'square'});
           }
         });
 
@@ -150,7 +152,7 @@
           {key: 'Cycle 3', values: []}];
 
         $.each(parsedData.cycles, function(i, val){
-          data[val].values.push({x: Math.floor(i/4), y: parsedData.cycle_time[i]});
+          data[val].values.push({x: Math.floor(i/4), y: parsedData.cycleTime[i]});
         });
 
         return data;

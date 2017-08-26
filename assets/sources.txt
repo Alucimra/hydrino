@@ -1,5 +1,8 @@
 flexbatter.scad,https://www.thingiverse.com/thing:456900/
 32650_battery_holder_-_one_cell.stl,https://www.thingiverse.com/thing:1577619/
 https://stackoverflow.com/questions/25283367/plot-a-best-fit-line-r
+
 http://bildr.org/2011/03/ds1307-arduino/
 
+Sleeping Arduino - Part 1-5
+http://donalmorrissey.blogspot.com/2010/04/putting-arduino-diecimila-to-sleep-part.html

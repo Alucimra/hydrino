@@ -236,20 +236,23 @@ void readDrive(){
 void readLogs(){
   unsigned int i = 0;
   //unsigned int value = 0;
-  Serial.begin(9600);
   printConfig();
   printVoltageLevels();
   printMotorLevels();
 
-  Serial.print(":) Reading Logs, last logPos: ");
-  Serial.print(logPos);
+  Serial.print(":) Reading Logs ");
   Serial.println();
 
-  Serial.print(":: Markers :> ");
+  Serial.print(":: Reserved Bytes :> {\"lastPos\":");
+  Serial.print(logPos);
+  Serial.print(",\"logStart\":");
+  Serial.print(logStart);
+  Serial.print(",\"reservedBytes\":[");
   while(i < logStart){
     Serial.print(EEPROM.read(i++));
-    Serial.print("\t");
+    if(i < logStart){ Serial.print(","); }
   }
+  Serial.print("]}");
   Serial.println();
 
   /* Log data in tsv format.
@@ -298,7 +301,7 @@ void startup(){
   loadLogPosition();
   if(digitalRead(DEBUG_PIN) == LOW){
     isDebugging = true;
-    readLogs();
+    Serial.begin(9600);
   }
 
   // remove the pullup, hopefully to conserve some power.
@@ -427,12 +430,7 @@ void saveCycle(uint8_t power, uint8_t cycle_time){
 // likely need seasonal updates.
 // There's the expectation that odd cycle_time (except 1) means an off cycle.
 // This expectation is used for graphing. See tools/chart.html
-void loop(){
-  if(isDebugging){
-    // TODO: Loop a serial read (for commands) when isDebugging is activated.
-    return;
-  }
-
+void actionLoop(){
   while(sleep_for > 0){ sleep_mode(); }
 
   uint8_t cycle_time = 1;
@@ -510,4 +508,17 @@ void loop(){
   cycle = (cycle + 1) % 4;
   sleep_for = cycle_time * CYCLE_LENGTH;
   // sleep will be handled on next iteration of this loop
+}
+
+void debugLoop(){
+  // TODO: Loop a serial read (for commands) when isDebugging is activated.
+  //readLogs();
+}
+
+void loop(){
+  if(isDebugging){
+    debugLoop();
+  } else {
+    actionLoop();
+  }
 }
