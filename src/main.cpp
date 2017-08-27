@@ -9,8 +9,7 @@
 #define MOTOR_B A3
 #define POWER_CHECK A2
 #define POWER_ACTIVATE 11
-#define LOG_RESET 9
-#define DEBUG_PIN 8
+#define DEBUG_PIN 9
 
 // TODO: Since we'll be getting a DS1307 module with an included AT24C32, we
 // should implement the code to read the time
@@ -99,7 +98,7 @@ void clearDrive(){
 
 void loadLogPosition(){
   // You should probably clearLogs() before using it the first time
-  // It happens on startup() if you ground the LOG_RESET pin
+  // Go into debug mode and send '0' (the string) to console
   uint8_t high_byte = EEPROM.read(0);
   uint8_t low_byte = EEPROM.read(1);
   logPos = high_byte * 256 + low_byte;
@@ -140,8 +139,6 @@ void printConfig(){
   Serial.print(POWER_CHECK);
   Serial.print(",\"powerActivate\":");
   Serial.print(POWER_ACTIVATE);
-  Serial.print(",\"logReset\":");
-  Serial.print(LOG_RESET);
   Serial.print(",\"debugPin\":");
   Serial.print(DEBUG_PIN);
   Serial.print("}");
@@ -164,9 +161,9 @@ void printMotorLevels(){
   // Hard coded for now, since it's tricky to do it otherwise
   Serial.print(":: Motor Timing :> {\"");
   Serial.print(SOLAR+TOLERANCE);
-  Serial.print("\":\"AB4 AB4 AB4 AB4\",\"");
+  Serial.print("\":\"AB6 AB6 AB6 AB6\",\"");
   Serial.print(FULL+TOLERANCE);
-  Serial.print("\":\"*3 A2 *7 B2\",\"");
+  Serial.print("\":\"*3 A4 *7 B4\",\"");
   Serial.print(CHARGED+TOLERANCE);
   Serial.print("\":\"*5 a *5 b\",\"");
   Serial.print(NOMINAL-TOLERANCE);
@@ -299,15 +296,14 @@ void startup(){
   analogRead(POWER_CHECK);
   // end analogReference setup
 
-  if(digitalRead(LOG_RESET) == LOW){ clearLogs(); }
   loadLogPosition();
   if(digitalRead(DEBUG_PIN) == LOW){
     isDebugging = true;
+    delay(500);;
     Serial.begin(9600);
   }
 
-  // remove the pullup, hopefully to conserve some power.
-  pinMode(LOG_RESET, INPUT);
+  // remove the pullup, conserve some power (hopefully)
   pinMode(DEBUG_PIN, INPUT);
 }
 
@@ -316,7 +312,6 @@ void setup(){
   pinMode(MOTOR_B, OUTPUT);
   pinMode(POWER_CHECK, INPUT);
   pinMode(POWER_ACTIVATE, OUTPUT);
-  pinMode(LOG_RESET, INPUT_PULLUP);
   pinMode(DEBUG_PIN, INPUT_PULLUP);
   analogReference(INTERNAL);
   analogRead(POWER_CHECK); // read and drop
@@ -458,18 +453,18 @@ void actionLoop(){
     // was put in to replace the old battery. We use up power to bring it back down.
     runMotor(motorA, STRONG);
     runMotor(motorB, STRONG);
-    cycle_time = 4;
+    cycle_time = 6;
   } else if(power > FULL + TOLERANCE){
     if(cycle == 0){
       cycle_time = 3;
     } else if(cycle == 1){
       runMotor(motorA, STRONG);
-      cycle_time = 2;
+      cycle_time = 4;
     } else if(cycle == 2){
       cycle_time = 7;
     } else if(cycle == 3){
       runMotor(motorB, STRONG);
-      cycle_time = 2;
+      cycle_time = 4;
     }
   } else if(power > CHARGED + TOLERANCE){
     if(cycle == 0 || cycle == 2){
@@ -514,18 +509,25 @@ void actionLoop(){
 }
 
 void debugLoop(){
-  // TODO: Loop a serial read (for commands) when isDebugging is activated.
   if(Serial.available() > 0){
     switch(Serial.read()){
-      case 13 : // new line
+      case 13 : // return
         readLogs();
         break;
-      case 32 :
+      case ' ' :
         Serial.print(":) Yes, we are debugging.");
+        Serial.println();
+        break;
+      case '0' :
+        Serial.print(":) Clearing Logs...please wait...");
+        clearLogs();
+        loadLogPosition();
+        Serial.print("Done.");
+        Serial.println();
         break;
     }
   }
-  //readLogs();
+  delay(50);
 }
 
 void loop(){
