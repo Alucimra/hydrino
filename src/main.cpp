@@ -97,6 +97,7 @@ void clearDrive(){
 }
 
 void loadLogPosition(){
+  // TODO: No longer keep logPos in EEPROM. Saving eats up write cycles too quickly.
   // You should probably clearLogs() before using it the first time
   // Go into debug mode and send '0' (the string) to console
   uint8_t high_byte = EEPROM.read(0);
@@ -389,6 +390,15 @@ void saveToDrive(){
   power_twi_disable();
 }
 
+// TODO: See loadLogPosition() Keep logPos in ram only to save EEPROM cycles
+/**
+ * We separate out the drive write to save us some power. the TWI (I2C) clock
+ * was disabled in setup() so if we wanted to write directly to the drive EEPROM
+ * then we would need to keep the TWI clock on. It's a small amount, but not 0.
+ * I'm writing to the chip EEPROM first, and then transferring in chunks of 1020
+ * bytes (+4 bytes for current time). This saves power at the expense of more
+ * chip EEPROM cycles.
+ */
 void saveCycle(uint8_t power, uint8_t cycle_time){
   // don't save data when we're debugging
   if(isDebugging){ return; }

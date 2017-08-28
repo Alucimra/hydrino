@@ -8,7 +8,7 @@
     <script src="./bootstrap-4.0.0b/js/bootstrap.min.js"></script>
     <script src="./js/d3.min.js"></script>
     <link rel="stylesheet" href="./bootstrap-4.0.0b/css/bootstrap.min.css"/>
-    <link re="stylesheet" href="d3ss.css" />
+    <link re="stylesheet" href="./css/d3ss.css" />
   </head>
   <body>
     <div class="container-fluid d3ss" id="chart">
@@ -25,141 +25,29 @@
         <div class="form-group">
           <label>Custom Logs</label>
           <textarea class="form-control" id="logs" rows=10></textarea>
+          <input type="button" id="parseData" class="btn" value="Parse Log" />
         </div>
         <div class="form-group">
+          <h2>Variables for R</h2>
           <label>Time</label>
           <input type="text" class="form-control" id="x" />
-        </div>
-        <div class="form-group">
+          <br>
           <label>Volts</label>
           <input type="text" class="form-control" id="y" />
         </div>
       </form>
     </div>
     <script src="./rawLog.js"></script>
+    <script src="./js/utils.js"></script>
+    <script src="./js/charts.js"></script>
     <script>
-      var $chart, chart;
-      var parsedData = {};
-
-      function parseConfig(logs, matcher){
-        var config;
-        var match;
-        try {
-          if(match = logs.match(matcher)){
-            config = JSON.parse(match[1]);
-          } else {
-            config = null;
-          }
-        } catch(e){
-          console.log(e);
-        }
-        return config;
-      }
-
-      function parseData(){
-        if(parsedData.parsedAt){ return; }
-
-        parsedData.totalTime = [];
-        parsedData.power = [];
-        parsedData.volts = [];
-        parsedData.cycleTime = [];
-        parsedData.cycles = [];
-        var time = 0;
-        var logs = ($('#logs').val().length == 0 ? window.rawLog : $('#logs').val());
-        // printing these fields cost >4kb of program memory space!
-        // have to figure out how to make use of it...
-        parsedData.voltageLevels = parseConfig(logs, /:: Voltage Levels :> ({.+})/);
-        parsedData.motorTimings = parseConfig(logs, /:: Motor Timing :> ({.+})/);
-        parsedData.motorPowerLevels = parseConfig(logs, /:: Motor Power Levels :> ({.+})/);
-        parsedData.config = parseConfig(logs, /:: Config :> ({.+})/);
-        parsedData.driveConfig = parseConfig(logs, /:: Drive Config :> ({.+})/);
-        parsedData.reservedBytes = 
-
-        var x = logs.split(":) Reading leftovers");
-
-        logs = x[1] +  x[0];
-
-        $.each(logs.split("\n"), function(i, line){
-          var data = line.split("\t");
-          if(line.length == 0 || line[0] == ':' || data.length != 3){ return; }
-
-          // TODO: Check if zero and skip
-          if(Number(data[0]) % 2 == 1){
-            // odd, read voltage
-            parsedData.power.push(Number(data[1]));
-            parsedData.volts.push(Number(data[2]));
-          } else {
-            // even, read time
-            parsedData.cycleTime.push(Number(data[2]));
-            parsedData.totalTime.push(time);
-            parsedData.cycles.push(Number(data[1]));
-            time += Number(data[2]);
-          }
-        });
-        parsedData.parsedAt = new Date();
-
-        $('#x').val('time <- c(' + parsedData.totalTime.join(',') + ')');
-        $('#y').val('volts <- c(' + parsedData.volts.join(',') + ')');
-      }
-
-      function clearChart(){
-        $chart.find('svg').children().remove();
-      }
-
-      function scatterData(wrap){
-        wrap || (wrap = 0);
-
-        var scatterData = [],
-            shapes = ['circle', 'square', 'triangle-up', 'triangle-down', 'diamond', 'cross'];
-        scatterData.push({key: 'On Cycle', values: []});
-        scatterData.push({key: 'Off Cycle', values: []});
-        $.each(parsedData.totalTime, function(i, val){
-          if(wrap > 0){ val = val % wrap; }
-          if(parsedData.cycleTime[i] % 2 == 0 || parsedData.cycleTime[i] == 1){
-            // even cycleTime or 1 means the cycle is on
-            scatterData[0].values.push({x: val, y: parsedData.volts[i], size: parsedData.cycleTime[i], shape: 'circle'});
-          } else {
-            // odd cycle, so it's off
-            scatterData[1].values.push({x: val, y: parsedData.volts[i], size: parsedData.cycleTime[i], shape: 'square'});
-          }
-        });
-
-        return scatterData;
-      }
-
-      function charge_remaining_scatter(wrap){
-        parseData();
-        clearChart();
-        // http://nvd3.org/examples/scatter.html
-        var chart = nv.models.scatterChart()
-                      .showDistX(false)
-                      .showDistY(false)
-                      .color(d3.scale.category10().range());
-
-        chart.xAxis.tickFormat(d3.format('.3s'));
-        chart.yAxis.tickFormat(d3.format('.2f'));
-
-        d3.select('#chart svg').datum(scatterData(wrap)).call(chart);
-        nv.utils.windowResize(chart.update);
-        window.chart = chart;
-      }
-
-      function cycleData(wrap){
-        wrap || (wrap = 0);
-        var data = [{key: 'Cycle 0', values: []},
-          {key: 'Cycle 1', values: []},
-          {key: 'Cycle 2', values: []},
-          {key: 'Cycle 3', values: []}];
-
-        $.each(parsedData.cycles, function(i, val){
-          data[val].values.push({x: Math.floor(i/4), y: parsedData.cycleTime[i]});
-        });
-
-        return data;
-      }
-
       $(function(){
         $chart = $('#chart');
+
+        $('#parseData').click(function(){
+          window.parsedData = {};
+          parseData();
+        });
 
         $('#logs').change(function(){
           parsedData = {};

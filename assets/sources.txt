@@ -2,7 +2,23 @@ flexbatter.scad,https://www.thingiverse.com/thing:456900/
 32650_battery_holder_-_one_cell.stl,https://www.thingiverse.com/thing:1577619/
 https://stackoverflow.com/questions/25283367/plot-a-best-fit-line-r
 
-http://bildr.org/2011/03/ds1307-arduino/
+bildr » Do You Have The Time_ DS1307 RT Clock + Arduino.pdf,http://bildr.org/2011/03/ds1307-arduino/
 
-Sleeping Arduino - Part 1-5
-http://donalmorrissey.blogspot.com/2010/04/putting-arduino-diecimila-to-sleep-part.html
+Sleeping Arduino - Parts 1-5,http://donalmorrissey.blogspot.com/2010/04/putting-arduino-diecimila-to-sleep-part.html
+
+
+
+
+
+Tutorial - Using DS1307 and DS3231 Real-time Clock Modules with Arduino.pdf,http://tronixstuff.com/2014/12/01/tutorial-using-ds1307-and-ds3231-real-time-clock-modules-with-arduino/
+
+
+Using a $1 DS3231 RTC & AT24C32 EEprom from eBay _ Arduino based underwater sensors.pdf,https://edwardmallon.wordpress.com/2014/05/21/using-a-cheap-3-ds3231-rtc-at24c32-eeprom-from-ebay/
+
+AT24C32.pdf,http://www.atmel.com/images/doc0336.pdf
+
+
+
+
+
+ascii_table.jpg,https://www.businessinsider.com.au/the-martian-hexidecimal-language-2015-9
