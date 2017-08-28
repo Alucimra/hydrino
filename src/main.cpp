@@ -109,87 +109,87 @@ void loadLogPosition(){
 void printVoltageLevels(){
   // TODO: Printing out this json is costing us over 900 bytes of program space.
   // If it becomes a problem, we'll have to just switch to delimiters
-  Serial.print(":: Voltage Levels :> {\"overcharge\":");
+  Serial.print(F(":: Voltage Levels :> {\"overcharge\":"));
   Serial.print(OVERCHARGE);
-  Serial.print(",\"solar\":");
+  Serial.print(F(",\"solar\":"));
   Serial.print(SOLAR);
-  Serial.print(",\"full\":");
+  Serial.print(F(",\"full\":"));
   Serial.print(FULL);
-  Serial.print(",\"charged\":");
+  Serial.print(F(",\"charged\":"));
   Serial.print(CHARGED);
-  Serial.print(",\"nominal\":");
+  Serial.print(F(",\"nominal\":"));
   Serial.print(NOMINAL);
-  Serial.print(",\"drained\":");
+  Serial.print(F(",\"drained\":"));
   Serial.print(DRAINED);
-  Serial.print(",\"cutoff\":");
+  Serial.print(F(",\"cutoff\":"));
   Serial.print(CUTOFF);
-  Serial.print(",\"tolerance\":");
+  Serial.print(F(",\"tolerance\":"));
   Serial.print(TOLERANCE);
-  Serial.print("}");
+  Serial.print(F("}"));
   Serial.println();
 }
 
 void printConfig(){
-  Serial.print(":: Config :> {\"cycle_length\":");
+  Serial.print(F(":: Config :> {\"cycle_length\":"));
   Serial.print(CYCLE_LENGTH);
-  Serial.print(",\"motorA\":");
+  Serial.print(F(",\"motorA\":"));
   Serial.print(MOTOR_A);
-  Serial.print(",\"motorB\":");
+  Serial.print(F(",\"motorB\":"));
   Serial.print(MOTOR_B);
-  Serial.print(",\"powerCheck\":");
+  Serial.print(F(",\"powerCheck\":"));
   Serial.print(POWER_CHECK);
-  Serial.print(",\"powerActivate\":");
+  Serial.print(F(",\"powerActivate\":"));
   Serial.print(POWER_ACTIVATE);
-  Serial.print(",\"debugPin\":");
+  Serial.print(F(",\"debugPin\":"));
   Serial.print(DEBUG_PIN);
-  Serial.print("}");
+  Serial.print(F("}"));
   Serial.println();
 }
 
 void printMotorLevels(){
-  Serial.print(":: Motor Power Levels :> {\"motorStartWait\":");
+  Serial.print(F(":: Motor Power Levels :> {\"motorStartWait\":"));
   Serial.print(MOTOR_START_WAIT);
-  Serial.print(",\"max\":");
+  Serial.print(F(",\"max\":"));
   Serial.print(MAX);
-  Serial.print(",\"strong\":");
+  Serial.print(F(",\"strong\":"));
   Serial.print(STRONG);
-  Serial.print(",\"weak\":");
+  Serial.print(F(",\"weak\":"));
   Serial.print(WEAK);
-  Serial.print(",\"off\":");
+  Serial.print(F(",\"off\":"));
   Serial.print(OFF);
-  Serial.print("}");
+  Serial.print(F("}"));
   Serial.println();
   // Hard coded for now, since it's tricky to do it otherwise
-  Serial.print(":: Motor Timing :> {\"");
+  Serial.print(F(":: Motor Timing :> {\""));
   Serial.print(SOLAR+TOLERANCE);
-  Serial.print("\":\"AB6 AB6 AB6 AB6\",\"");
+  Serial.print(F("\":\"AB6 AB6 AB6 AB6\",\""));
   Serial.print(FULL+TOLERANCE);
-  Serial.print("\":\"*3 A4 *7 B4\",\"");
+  Serial.print(F("\":\"*3 A4 *7 B4\",\""));
   Serial.print(CHARGED+TOLERANCE);
-  Serial.print("\":\"*5 a *5 b\",\"");
+  Serial.print(F("\":\"*5 a *5 b\",\""));
   Serial.print(NOMINAL-TOLERANCE);
-  Serial.print("\":\"*9 a *9 b\",\"");
+  Serial.print(F("\":\"*9 a *9 b\",\""));
   Serial.print(DRAINED-TOLERANCE);
-  Serial.print("\":\"*19 a *19 b\",\"");
+  Serial.print(F("\":\"*19 a *19 b\",\""));
   Serial.print(CUTOFF);
-  Serial.print("\":\"*59 a *59 b\",\"");
-  Serial.print("0\":\"*21 *21 *21 *21\"");
-  Serial.print("}");
+  Serial.print(F("\":\"*59 a *59 b\",\""));
+  Serial.print(F("0\":\"*21 *21 *21 *21\""));
+  Serial.print(F("}"));
   Serial.println();
 }
 
 void printLogEntry(unsigned int i, uint8_t value){
   Serial.print(i);
-  Serial.print("\t");
+  Serial.print(F("\t"));
   if(i % 2 == 0){
     // even numbered sequences are cycles
     Serial.print(value % 4);
-    Serial.print("\t");
+    Serial.print(F("\t"));
     Serial.print(value >> 2);
   } else  {
     // odd number sequences is the power
     Serial.print(value);
-    Serial.print("\t");
+    Serial.print(F("\t"));
     Serial.print(0.016*value);
   }
   Serial.println();
@@ -201,19 +201,19 @@ void readDrive(){
   power_twi_enable();
   delay(1000);
 
-  Serial.print(":: Drive Config :> {\"logStart\":");
+  Serial.print(F(":: Drive Config :> {\"logStart\":"));
   Serial.print(logStart);
-  Serial.print(",\"driveId\":");
+  Serial.print(F(",\"driveId\":"));
   Serial.print(DRIVE_ID);
-  Serial.print(",\"driveSpace\":");
+  Serial.print(F(",\"driveSpace\":"));
   Serial.print(DRIVE_SPACE);
-  Serial.print(",\"saveToDriveAt\":");
+  Serial.print(F(",\"saveToDriveAt\":"));
   Serial.print(SAVE_TO_DRIVE_AT);
-  Serial.print(",\"driveWriteLimit\":");
+  Serial.print(F(",\"driveWriteLimit\":"));
   Serial.print(DRIVE_WRITE_LIMIT);
-  Serial.print("}");
+  Serial.print(F("}"));
   Serial.println();
-  Serial.print(":) Reading from Drive");
+  Serial.print(F(":) Reading from Drive"));
   Serial.println();
 
   while(read < bytes_to_read){
@@ -240,19 +240,19 @@ void readLogs(){
   printVoltageLevels();
   printMotorLevels();
 
-  Serial.print(":) Reading Logs ");
+  Serial.print(F(":) Reading Logs "));
   Serial.println();
 
-  Serial.print(":: Reserved Bytes :> {\"lastPos\":");
+  Serial.print(F(":: Reserved Bytes :> {\"lastPos\":"));
   Serial.print(logPos);
-  Serial.print(",\"logStart\":");
+  Serial.print(F(",\"logStart\":"));
   Serial.print(logStart);
-  Serial.print(",\"reservedBytes\":[");
+  Serial.print(F(",\"reservedBytes\":["));
   while(i < logStart){
     Serial.print(EEPROM.read(i++));
-    if(i < logStart){ Serial.print(","); }
+    if(i < logStart){ Serial.print(F(",")); }
   }
-  Serial.print("]}");
+  Serial.print(F("]}"));
   Serial.println();
 
   /* Log data in tsv format.
@@ -268,7 +268,7 @@ void readLogs(){
     printLogEntry(i, EEPROM.read(i));
     i++;
   }
-  Serial.print(":) Reading leftovers");
+  Serial.print(F(":) Reading leftovers"));
   Serial.println();
 
   while(i < EEPROM.length()){
@@ -276,7 +276,7 @@ void readLogs(){
     i++;
   }
 
-  Serial.print(":) Done");
+  Serial.print(F(":) Done"));
 
   // We're using a pre-processor directive below to skip calling the function
   // if we don't have a drive in place.
@@ -525,14 +525,14 @@ void debugLoop(){
         readLogs();
         break;
       case ' ' :
-        Serial.print(":) Yes, we are debugging.");
+        Serial.print(F(":) Yes, we are debugging."));
         Serial.println();
         break;
       case '0' :
-        Serial.print(":) Clearing Logs...please wait...");
+        Serial.print(F(":) Clearing Logs...please wait..."));
         clearLogs();
         loadLogPosition();
-        Serial.print("Done.");
+        Serial.print(F("Done."));
         Serial.println();
         break;
     }
