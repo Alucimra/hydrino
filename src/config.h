@@ -21,10 +21,15 @@
 // TODO: We could use this HAS_DRIVE preprocessor to skip function definitions
 // because we won't be calling them anyway.
 #define HAS_DRIVE false
-#define DRIVE_ID 0x50
+#define DRIVE_ID 0x57
 #define SAVE_TO_DRIVE_AT 1000
 #define DRIVE_SPACE 32768
 #define DRIVE_WRITE_LIMIT 25
+
+
+// RTC info (DS3231)
+#define HAS_CLOCK false
+#define CLOCK_ID 0x68
 
 
 // motor power Levels
@@ -55,7 +60,6 @@ const int NOMINAL = 702; // 3.2v
 const int DRAINED = 680; // 3.1v
 const int CUTOFF = 660; // 3.0v
 const int TOLERANCE = 26; // 13=0.05v
-
 
 // we have 1024 bytes of EEPROM
 // marker at position 0 and 1 tells us where we are, 2 is for extra storage

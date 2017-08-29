@@ -1,5 +1,6 @@
 #include <config.h>
 #include <chipdata.h>
+#include <clock.h>
 
 #ifndef HYDRINO_DEBUG
 #define HYDRINO_DEBUG
@@ -204,6 +205,30 @@ void debugLoop(){
     }
   }
   delay(50);
+}
+
+void displayTime() {
+  byte second, minute, hour, dayOfWeek, dayOfMonth, month, year;
+  // retrieve data from DS3231
+  readTime(&second, &minute, &hour, &dayOfWeek, &dayOfMonth, &month,   &year);
+  // send it to the serial monitor
+  Serial.print(hour, DEC);
+  // convert the byte variable to a decimal number when displayed
+  Serial.print(F(":"));
+  if (minute<10) { Serial.print(F("0")); }
+  Serial.print(minute, DEC);
+  Serial.print(F(":"));
+  if (second<10) { Serial.print("0"); }
+  Serial.print(second, DEC);
+  Serial.print(F(" "));
+  Serial.print(dayOfMonth, DEC);
+  Serial.print(F("/"));
+  Serial.print(month, DEC);
+  Serial.print(F("/"));
+  Serial.print(year, DEC);
+  Serial.print(F(""));
+  Serial.print(F("Day of Week: "));
+  Serial.print(dayOfWeek);
 }
 
 #endif
