@@ -85,12 +85,14 @@ void actionLoop(){
       cycle_time = 5;
     } else if(cycle == 1){
       runMotor(motorA, WEAK);
+      cycle_time = 2;
     } else if(cycle == 3){
       runMotor(motorB, WEAK);
+      cycle_time = 2;
     }
   } else if(power > NOMINAL - TOLERANCE){
     if(cycle == 0 || cycle == 2){
-      cycle_time = 9;
+      cycle_time = 7;
     } else if(cycle == 1){
       runMotor(motorA, WEAK);
     } else if(cycle == 3){
@@ -98,7 +100,7 @@ void actionLoop(){
     }
   } else if(power > DRAINED - TOLERANCE){
     if(cycle == 0 || cycle == 2){
-      cycle_time = 19;
+      cycle_time = 15;
     } else if(cycle == 1){
       runMotor(motorA, WEAK);
     } else if(cycle == 3){

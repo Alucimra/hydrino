@@ -23,8 +23,9 @@ void startup(){
   loadLogPosition();
   if(digitalRead(DEBUG_PIN) == LOW){
     isDebugging = true;
-    delay(500);;
     Serial.begin(9600);
+    delay(500);
+    Serial.print(F(":) Debugging activated."));
   }
 
   // remove the pullup, conserve some power (hopefully)

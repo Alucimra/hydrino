@@ -1,10 +1,11 @@
 #include <config.h>
-#include <chipdata.h>
 
 #ifndef HYDRINO_DRIVE
 #define HYDRINO_DRIVE
 
 void clearDrive(){
+  power_twi_enable();
+  delay(1000);
   unsigned int written = 0;
 
   while(written < DRIVE_SPACE){
@@ -18,6 +19,8 @@ void clearDrive(){
     Wire.endTransmission();
     delay(20); // with the 20ms delay, it takes ~26.2 seconds to clear the drive
   }
+  power_twi_disable();
+  delay(50);
 }
 
 

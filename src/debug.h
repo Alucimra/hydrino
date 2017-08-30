@@ -1,6 +1,7 @@
 #include <config.h>
 #include <chipdata.h>
 #include <clock.h>
+#include <drive.h>
 
 #ifndef HYDRINO_DEBUG
 #define HYDRINO_DEBUG
@@ -24,11 +25,13 @@ void printVoltageLevels(){
   Serial.print(CUTOFF);
   Serial.print(F(",\"tolerance\":"));
   Serial.print(TOLERANCE);
+  Serial.print(F(",\"multiplier\":"));
+  Serial.print(VOLTAGE_MULTIPLIER);
   Serial.print(F("}"));
   Serial.println();
 }
 
-void printConfig(){
+void printPins(){
   Serial.print(F(":: Config :> {\"cycle_length\":"));
   Serial.print(CYCLE_LENGTH);
   Serial.print(F(",\"motorA\":"));
@@ -41,6 +44,17 @@ void printConfig(){
   Serial.print(POWER_ACTIVATE);
   Serial.print(F(",\"debugPin\":"));
   Serial.print(DEBUG_PIN);
+
+  #if(HAS_DRIVE)
+  Serial.print(F(",\"driveId\":"));
+  Serial.print(DRIVE_ID);
+  #endif
+
+  #if(HAS_CLOCK)
+  Serial.print(F(",\"clockId\":"));
+  Serial.print(CLOCK_ID);
+  #endif
+
   Serial.print(F("}"));
   Serial.println();
 }
@@ -65,16 +79,22 @@ void printMotorLevels(){
   Serial.print(FULL+TOLERANCE);
   Serial.print(F("\":\"*3 A4 *7 B4\",\""));
   Serial.print(CHARGED+TOLERANCE);
-  Serial.print(F("\":\"*5 a *5 b\",\""));
+  Serial.print(F("\":\"*5 a2 *5 b2\",\""));
   Serial.print(NOMINAL-TOLERANCE);
-  Serial.print(F("\":\"*9 a *9 b\",\""));
+  Serial.print(F("\":\"*7 a *7 b\",\""));
   Serial.print(DRAINED-TOLERANCE);
-  Serial.print(F("\":\"*19 a *19 b\",\""));
+  Serial.print(F("\":\"*15 a *15 b\",\""));
   Serial.print(CUTOFF);
   Serial.print(F("\":\"*59 a *59 b\",\""));
   Serial.print(F("0\":\"*21 *21 *21 *21\""));
   Serial.print(F("}"));
   Serial.println();
+}
+
+void clearSerialBuffer(){
+  while(Serial.available() > 0){
+    Serial.read();
+  }
 }
 
 void printLogEntry(unsigned int i, uint8_t value){
@@ -89,18 +109,60 @@ void printLogEntry(unsigned int i, uint8_t value){
     // odd number sequences is the power
     Serial.print(value);
     Serial.print(F("\t"));
-    Serial.print(0.016*value);
+    Serial.print(VOLTAGE_MULTIPLIER*value);
   }
   Serial.println();
 }
+
+#if(HAS_DRIVE)
+void readDrive(){
+  unsigned int bytes_to_read = SAVE_TO_DRIVE_AT*EEPROM.read(2);
+  unsigned int read = 0;
+  power_twi_enable();
+  delay(1000);
+
+  Serial.print(F(":: Drive Config :> {\"logStart\":"));
+  Serial.print(logStart);
+  Serial.print(F(",\"driveId\":"));
+  Serial.print(DRIVE_ID);
+  Serial.print(F(",\"driveSpace\":"));
+  Serial.print(DRIVE_SPACE);
+  Serial.print(F(",\"saveToDriveAt\":"));
+  Serial.print(SAVE_TO_DRIVE_AT);
+  Serial.print(F(",\"driveWriteLimit\":"));
+  Serial.print(DRIVE_WRITE_LIMIT);
+  Serial.print(F("}"));
+  Serial.println();
+  Serial.print(F(":) Reading from Drive"));
+  Serial.println();
+
+  while(read < bytes_to_read){
+    //TODO: Do we need to begin a transmission before making request?
+    Wire.beginTransmission(DRIVE_ID);
+    Wire.write(read >> 8);
+    Wire.write(read & 0xFF);
+    Wire.endTransmission();
+    delay(10);
+    Wire.requestFrom(DRIVE_ID, 30); // only read 30 bytes at a time
+    while(Wire.available()){
+      printLogEntry(read, Wire.read());
+      read++;
+    }
+    delay(10);
+  }
+  power_twi_disable();
+}
+#else
+void readDrive(){
+  Serial.print(F(":( Drive disabled or unavailable, can no read"));
+  Serial.println();
+}
+#endif
 
 
 void readLogs(){
   unsigned int i = 0;
   //unsigned int value = 0;
-  printConfig();
-  printVoltageLevels();
-  printMotorLevels();
 
   Serial.print(F(":) Reading Logs "));
   Serial.println();
@@ -139,78 +201,24 @@ void readLogs(){
   }
 
   Serial.print(F(":) Done"));
+}
 
-  // We're using a pre-processor directive below to skip calling the function
-  // if we don't have a drive in place.
-  #if(HAS_DRIVE)
+void dataDump(){
+  Serial.print(F(":) Get ready for all the data! This will take a while..."));
+  Serial.println();
+
+  printPins();
+  printVoltageLevels();
+  printMotorLevels();
+  printDriveConfig();
+  readLogs();
   readDrive();
-  #endif
-}
 
-void readDrive(){
-  unsigned int bytes_to_read = SAVE_TO_DRIVE_AT*EEPROM.read(2);
-  unsigned int read = 0;
-  power_twi_enable();
-  delay(1000);
-
-  Serial.print(F(":: Drive Config :> {\"logStart\":"));
-  Serial.print(logStart);
-  Serial.print(F(",\"driveId\":"));
-  Serial.print(DRIVE_ID);
-  Serial.print(F(",\"driveSpace\":"));
-  Serial.print(DRIVE_SPACE);
-  Serial.print(F(",\"saveToDriveAt\":"));
-  Serial.print(SAVE_TO_DRIVE_AT);
-  Serial.print(F(",\"driveWriteLimit\":"));
-  Serial.print(DRIVE_WRITE_LIMIT);
-  Serial.print(F("}"));
+  Serial.print(F(":) Done."));
   Serial.println();
-  Serial.print(F(":) Reading from Drive"));
-  Serial.println();
-
-  while(read < bytes_to_read){
-    //TODO: Do we need to begin a transmission before making request?
-    Wire.beginTransmission(DRIVE_ID);
-    Wire.write(read >> 8);
-    Wire.write(read & 0xFF);
-    Wire.endTransmission();
-    delay(10);
-    Wire.requestFrom(DRIVE_ID, 30); // only read 30 bytes at a time
-    while(Wire.available()){
-      printLogEntry(read, Wire.read());
-      read++;
-    }
-    delay(10);
-  }
-  power_twi_disable();
 }
 
-void debugLoop(){
-  if(Serial.available() > 0){
-    switch(Serial.read()){
-      case 13 : // return
-        readLogs();
-        break;
-      case ' ' :
-        Serial.print(F(":) Yes, we are debugging."));
-        Serial.println();
-        break;
-      case '0' :
-        Serial.print(F(":) Clearing Logs...please wait..."));
-        clearLogs();
-        loadLogPosition();
-        Serial.print(F("Done."));
-        Serial.println();
-        break;
-    }
-  }
-  delay(50);
-}
-
-void displayTime() {
-  byte second, minute, hour, dayOfWeek, dayOfMonth, month, year;
-  // retrieve data from DS3231
-  readTime(&second, &minute, &hour, &dayOfWeek, &dayOfMonth, &month,   &year);
+void displayTime(uint8_t second, uint8_t minute, uint8_t hour, uint8_t dayOfWeek, uint8_t dayOfMonth, uint8_t month, uint8_t year) {
   // send it to the serial monitor
   Serial.print(hour, DEC);
   // convert the byte variable to a decimal number when displayed
@@ -226,9 +234,187 @@ void displayTime() {
   Serial.print(month, DEC);
   Serial.print(F("/"));
   Serial.print(year, DEC);
-  Serial.print(F(""));
-  Serial.print(F("Day of Week: "));
+  Serial.print(F(" "));
+  Serial.print(F("Weekday (1=Sun, 7=Sat): "));
   Serial.print(dayOfWeek);
+}
+
+#if(HAS_CLOCK)
+void getTime(){
+  uint8_t second, minute, hour, dayOfWeek, dayOfMonth, month, year;
+  // retrieve data from DS3231
+  readTime(&second, &minute, &hour, &dayOfWeek, &dayOfMonth, &month, &year);
+  Serial.print(F(":) Reading the time: "));
+  displayTime(second, minute, hour, dayOfWeek, dayOfMonth, month, year);
+  Serial.println();
+}
+#else
+void getTime(){
+  Serial.print(F(":( Clock disabled or unavailable, can't get time"));
+  Serial.println();
+}
+#endif
+
+void printHelp() {
+  Serial.print(F(":) List of Debug Commands"));
+  Serial.println();
+  Serial.print(F(":) (empty) or ?\tThis thing you're reading."));
+  Serial.println();
+  Serial.print(F(":) dump\tprint out all the config and data in one big dump"));
+  Serial.println();
+  Serial.print(F(":) readLogs\tread the eeprom logs"));
+  Serial.println();
+  Serial.print(F(":) clearLogs\tclear the eeprom logs with zeros"));
+  Serial.println();
+
+  #if(HAS_DRIVE)
+  Serial.print(F(":) readDrive\tread the eeprom logs"));
+  Serial.println();
+  Serial.print(F(":) clearDrive\tclear the eeprom logs with zeros"));
+  Serial.println();
+  #endif
+
+  #if(HAS_CLOCK)
+  Serial.print(F(":) getTime\tread the current time"));
+  Serial.println();
+  Serial.print(F(":) getTime10\tread the current time 10 times (ticking seconds)"));
+  Serial.println();
+  Serial.print(F(":) setTime\tset the current time"));
+  Serial.println();
+  #endif
+
+  Serial.print(F(":) config:voltage\tprint voltage levels for battery"));
+  Serial.println();
+  Serial.print(F(":) config:pins\tprint pin designations and i2c devices"));
+  Serial.println();
+  Serial.print(F(":) config:motors\tprint motor power levels"));
+  Serial.println();
+
+  #if(HAS_DRIVE)
+  Serial.print(F(":) config:drive\tprint drive configuration"));
+  Serial.println();
+  #endif
+}
+
+#if(HAS_CLOCK)
+/**
+ * There's a little problem with this. Serial baud of 9600 is a little slow and
+ * we can't quite pin down the exact timing of the seconds.
+ * We can get close by setting a time ahead, and waiting until a second before
+ * to press y and start the save. But it could still be about ~1-2s off
+ * Can't trust Serial printing either, because there's still the delay.
+ */
+void setClockTime(){
+  uint8_t second, minute, hour, dayOfWeek, dayOfMonth, month, year, accept;
+  Serial.setTimeout(60000);
+  // give up to 60 seconds to enter the input
+
+  Serial.print(F(":) Year (0 to 99)"));
+  Serial.println();
+  Serial.print(F(":] "));
+  year = (uint8_t)Serial.parseInt() % 100;
+  Serial.print(year);
+  Serial.println();
+
+  Serial.print(F(":) Month (1 to 12)"));
+  Serial.println();
+  Serial.print(F(":] "));
+  month = (uint8_t)Serial.parseInt() % 13;
+  Serial.print(month);
+  Serial.println();
+
+  Serial.print(F(":) Day of Month (1 to 31)"));
+  Serial.println();
+  Serial.print(F(":] "));
+  dayOfMonth = (uint8_t)Serial.parseInt() % 32;
+  Serial.print(dayOfMonth);
+  Serial.println();
+
+  Serial.print(F(":) Day of Week (1 to 7, Sun to Sat)"));
+  Serial.println();
+  Serial.print(F(":] "));
+  dayOfWeek = (uint8_t)Serial.parseInt() % 8;
+  Serial.print(dayOfWeek);
+  Serial.println();
+
+  Serial.print(F(":) Hour (0 to 23)"));
+  Serial.println();
+  Serial.print(F(":] "));
+  hour = (uint8_t)Serial.parseInt() % 24;
+  Serial.print(hour);
+  Serial.println();
+
+  Serial.print(F(":) Minute (0 to 59)"));
+  Serial.println();
+  Serial.print(F(":] "));
+  minute = (uint8_t)Serial.parseInt() % 60;
+  Serial.print(minute);
+  Serial.println();
+
+  Serial.print(F(":) Second (0 to 59)"));
+  Serial.println();
+  Serial.print(F(":] "));
+  second = (uint8_t)Serial.parseInt() % 60;
+  Serial.print(second);
+  Serial.println();
+  Serial.setTimeout(1000);
+
+  clearSerialBuffer();
+
+  Serial.print(F(":) Setting time to ("));
+  displayTime(second, minute, hour, dayOfWeek, dayOfMonth, month, year);
+  Serial.print(F("). Press y to continue, or anything else to cancel."));
+  Serial.println();
+  Serial.print(F(":] "));
+  while(Serial.available() <= 0){
+    // wait
+  }
+  accept = Serial.read();
+  Serial.print(accept);
+  if(accept == 'y'){
+    Serial.print(":) Setting the time...please wait...");
+    setTime(second, minute, hour, dayOfWeek, dayOfMonth, month, year);
+    delay(500);
+    Serial.print(F("Done!"));
+    Serial.println();
+    getTime();
+  } else {
+    Serial.print(F(":( Canceled by user."));
+    Serial.println();
+  }
+}
+#else
+void setClockTime(){
+  Serial.print(F(":( Clock disabled or unavailable, can't set time"));
+  Serial.println();
+}
+#endif
+
+void debugLoop(){
+  if(Serial.available() == 0){ return; }
+  Serial.print(F(":] "));
+  String cmd = Serial.readStringUntil(13);
+  Serial.print(cmd);
+  Serial.println();
+
+  if(cmd == "readLogs"){ readLogs(); }
+  if(cmd == "" or cmd == "?"){
+    printHelp();
+  }
+  if(cmd == "clearLogs"){
+    clearLogs();
+    loadLogPosition();
+    Serial.print(F(":) Done."));
+    Serial.println();
+  }
+  if(cmd == "getTime"){ getTime(); }
+  if(cmd == "getTime10"){
+    for(uint8_t i=0; i<10; i++){
+      getTime();
+    }
+  }
+  if(cmd == "setTime"){ setClockTime(); }
+  delay(50);
 }
 
 #endif

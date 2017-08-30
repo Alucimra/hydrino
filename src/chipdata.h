@@ -1,10 +1,16 @@
 #include <config.h>
+#include <drive.h>
 
 #ifndef HYDRINO_CHIPDATA
 #define HYDRINO_CHIPDATA
 
+/**
+ * DEPRECATED: This is no longer used due to the fact that the cycles are going
+ * faster than expected. Which means there are more eeprom cycles for storing
+ * the log position, which is bad for the eeprom (has limited write cycles).
+ * PENDING DELETION
+ */
 void loadLogPosition(){
-  // TODO: No longer keep logPos in EEPROM. Saving eats up write cycles too quickly.
   // You should probably clearLogs() before using it the first time
   // Go into debug mode and send '0' (the string) to console
   uint8_t high_byte = EEPROM.read(0);
@@ -18,8 +24,6 @@ void clearLogs(){
     EEPROM.write(i, 0);
   }
 }
-
-
 
 // TODO: See loadLogPosition() Keep logPos in ram only to save EEPROM cycles
 /**
@@ -37,8 +41,8 @@ void saveCycle(uint8_t power, uint8_t cycle_time){
   // we save the power on odd byte, then cycle+cycle_time next (even)
   // NOTE: power has been scaled down from 1023 to 255 to save space, lost res
 
-  // this should not happen...we should always be on an odd byte when called
-  if(logPos % 2 == 0){ logPos++; }
+  // this should not happen...
+  if(logPos % 2 != logStart % 2){ logPos++; }
 
   // we will overflow, cycle back around to the start
   // this shouldn't happen with the extra drive backup in place
@@ -48,15 +52,23 @@ void saveCycle(uint8_t power, uint8_t cycle_time){
   EEPROM.write(logPos++, power);
   EEPROM.write(logPos++, cycling);
   delay(500);
-  EEPROM.write(0, (uint8_t)(logPos >> 8));
-  EEPROM.write(1, (uint8_t)(logPos));
+  /**
+   * PENDING DELETION. See loadLogPosition() for more details
+   * In exchange for not keeping logPos in eeprom, we will write a 0 byte ahead
+   * in order to mark our position. This is still bad on the EEPROM write cycles
+   * since the number of writes remains the same (4 bytes) but helps distribute
+   * the buffer.
+   */
+  //EEPROM.write(0, (uint8_t)(logPos >> 8));
+  //EEPROM.write(1, (uint8_t)(logPos));
+  //delay(500);
+  EEPROM.write(logPos + 1, 0);
+  EEPROM.write(logPos + 2, 0);
   delay(500);
 
   #if(HAS_DRIVE)
-  if(logPos == SAVE_TO_DRIVE_AT+logStart){
-    // we wrote 1000 bytes (500 cycles) save to drive
+  if(logPos >= SAVE_TO_DRIVE_AT+logStart){
     saveToDrive();
-    // and then cycle back to the beginning for the logs
     logPos = logStart;
   }
   #endif

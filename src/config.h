@@ -20,15 +20,14 @@
 // Drive info (AT24C32)
 // TODO: We could use this HAS_DRIVE preprocessor to skip function definitions
 // because we won't be calling them anyway.
-#define HAS_DRIVE false
+#define HAS_DRIVE true
 #define DRIVE_ID 0x57
-#define SAVE_TO_DRIVE_AT 1000
+#define SAVE_TO_DRIVE_AT 1020
 #define DRIVE_SPACE 32768
 #define DRIVE_WRITE_LIMIT 25
 
-
 // RTC info (DS3231)
-#define HAS_CLOCK false
+#define HAS_CLOCK true
 #define CLOCK_ID 0x68
 
 
@@ -45,28 +44,41 @@ uint8_t cycle = 0;
 const bool motorA = true;
 const bool motorB = false;
 
-
-// Voltage Levels
-// WARNING: Assumes internal reference voltage is 1.0v. See docs/voltage levels.txt
-// aRead = (battery_voltage / 4) / (1.0 / 1023)
-// battery_voltage = aRead * 4 * (1.0 / 1023)
-// Real life read checks:
-// 225*4 = 900 = ~4.1v (8/26/17) vref = 1.165
-const int OVERCHARGE = 800; // >3.6v
-const int SOLAR = 790; // ~3.6v
-const int FULL = 746; // 3.4v
-const int CHARGED = 720; // 3.3v
-const int NOMINAL = 702; // 3.2v
-const int DRAINED = 680; // 3.1v
-const int CUTOFF = 660; // 3.0v
-const int TOLERANCE = 26; // 13=0.05v
+/**
+ * Voltage Levels
+ * WARNING: Assumes internal reference voltage is 1.0v. See docs/voltage levels.txt
+ * divisor = fullResistance / potResistance
+ * aRead = (battery_voltage / divisor) / (vref / 1023)
+ * batteryVoltage = aRead * divisor * (vref / 1023)
+ * vref = (1023 * battery_voltage) / (divisor * aRead)
+ * multiplier = 4 * divisor * (vref / 1023)
+ *
+ * Real life read checks:
+ * 191*4 = 764 = ~3.33 (8/27/17) vref = 1.12v
+ * 190*4 = 760 = ~3.28 (8/30/17) vref = 1.10v
+ *
+ * Changes:
+ * vref = 1.11 (8/30/17)
+ * divisor = 9.75 / 2.45 = ~3.9795918367 (8/30/17)
+ * multiplier = ~0.01727213 (below, 8/30/17)
+ */
+const int OVERCHARGE = 850; // between 3.6v, 3.7
+const int SOLAR = 830;      // 3.6v
+const int FULL = 787;       // 3.4v
+const int CHARGED = 764;    // 3.3v
+const int NOMINAL = 741;    // 3.2v
+const int DRAINED = 717;    // 3.1v
+const int CUTOFF = 680;     // 3.0v
+const int TOLERANCE = 23;   // 12=0.05v 23 = 0.1
+const float VOLTAGE_MULTIPLIER = 4.0 * (9.75/2.45) * (1.11/1023);
 
 // we have 1024 bytes of EEPROM
-// marker at position 0 and 1 tells us where we are, 2 is for extra storage
-unsigned int logPos = 3; // first two bytes is reserved for logPointer
-unsigned int logStart = 3;
+// The first 4 bytes is reserved for start time
+unsigned int logPos = 4;
+unsigned int logStart = 4;
 
-bool isDebugging = false; // default debugging mode
+// default debugging mode is off
+bool isDebugging = false;
 
 // timers for sleep and stuff
 volatile char sleep_for = 0;
