@@ -1,6 +1,5 @@
 #include <config.h>
 #include <chipdata.h>
-#include <clock.h>
 #include <drive.h>
 
 #ifndef HYDRINO_DEBUG
@@ -32,7 +31,7 @@ void printVoltageLevels(){
 }
 
 void printPins(){
-  Serial.print(F(":: Config :> {\"cycle_length\":"));
+  Serial.print(F(":: Pins :> {\"cycle_length\":"));
   Serial.print(CYCLE_LENGTH);
   Serial.print(F(",\"motorA\":"));
   Serial.print(MOTOR_A);
@@ -91,6 +90,23 @@ void printMotorLevels(){
   Serial.println();
 }
 
+void printDriveConfig(){
+  Serial.print(F(":: Drive Config :> {\"space\":"));
+  Serial.print(DRIVE_SPACE);
+  Serial.print(F(",\"driveId\":"));
+  Serial.print(DRIVE_ID);
+  Serial.print(F(",\"drivePos\":"));
+  Serial.print(drivePos);
+  Serial.print(F(",\"eepromSize\":"));
+  Serial.print(EEPROM.length());
+  Serial.print(F(",\"writeLimit\":"));
+  Serial.print(DRIVE_WRITE_LIMIT);
+  Serial.print(F(",\"markerByte\":"));
+  Serial.print(DRIVE_MARKER_BYTE);
+  Serial.print(F("}"));
+  Serial.println();
+}
+
 void clearSerialBuffer(){
   while(Serial.available() > 0){
     Serial.read();
@@ -115,26 +131,25 @@ void printLogEntry(unsigned int i, uint8_t value){
 }
 
 #if(HAS_DRIVE)
+void driveZero(){
+  Serial.print(F(":) Clearing drive. This will take a long time. Please Wait..."));
+  clearDrive();
+  Serial.print(F("Done!"));
+  Serial.println();
+}
+
 void readDrive(){
-  unsigned int bytes_to_read = SAVE_TO_DRIVE_AT*EEPROM.read(2);
+  unsigned int bytes_to_read = drivePos*EEPROM.length();
   unsigned int read = 0;
+
+  if(drivePos == 0){
+    Serial.print(F(":) There is no data worth reading. drivePos = 0;"));
+    Serial.println();
+    return;
+  }
+
   power_twi_enable();
   delay(1000);
-
-  Serial.print(F(":: Drive Config :> {\"logStart\":"));
-  Serial.print(logStart);
-  Serial.print(F(",\"driveId\":"));
-  Serial.print(DRIVE_ID);
-  Serial.print(F(",\"driveSpace\":"));
-  Serial.print(DRIVE_SPACE);
-  Serial.print(F(",\"saveToDriveAt\":"));
-  Serial.print(SAVE_TO_DRIVE_AT);
-  Serial.print(F(",\"driveWriteLimit\":"));
-  Serial.print(DRIVE_WRITE_LIMIT);
-  Serial.print(F("}"));
-  Serial.println();
-  Serial.print(F(":) Reading from Drive"));
-  Serial.println();
 
   while(read < bytes_to_read){
     //TODO: Do we need to begin a transmission before making request?
@@ -153,8 +168,13 @@ void readDrive(){
   power_twi_disable();
 }
 #else
+void driveZero(){
+  Serial.print(F(":( Drive disabled or unavailable, can not clear"));
+  Serial.println();
+}
+
 void readDrive(){
-  Serial.print(F(":( Drive disabled or unavailable, can no read"));
+  Serial.print(F(":( Drive disabled or unavailable, can not read"));
   Serial.println();
 }
 #endif
@@ -171,6 +191,10 @@ void readLogs(){
   Serial.print(logPos);
   Serial.print(F(",\"logStart\":"));
   Serial.print(logStart);
+  Serial.print(F(",\"drivePos\":"));
+  Serial.print(drivePos);
+  Serial.print(F(",\"eepromSize\":"));
+  Serial.print(EEPROM.length());
   Serial.print(F(",\"reservedBytes\":["));
   while(i < logStart){
     Serial.print(EEPROM.read(i++));
@@ -201,6 +225,7 @@ void readLogs(){
   }
 
   Serial.print(F(":) Done"));
+  Serial.println();
 }
 
 void dataDump(){
@@ -242,7 +267,6 @@ void displayTime(uint8_t second, uint8_t minute, uint8_t hour, uint8_t dayOfWeek
 #if(HAS_CLOCK)
 void getTime(){
   uint8_t second, minute, hour, dayOfWeek, dayOfMonth, month, year;
-  // retrieve data from DS3231
   readTime(&second, &minute, &hour, &dayOfWeek, &dayOfMonth, &month, &year);
   Serial.print(F(":) Reading the time: "));
   displayTime(second, minute, hour, dayOfWeek, dayOfMonth, month, year);
@@ -372,7 +396,7 @@ void setClockTime(){
   accept = Serial.read();
   Serial.print(accept);
   if(accept == 'y'){
-    Serial.print(":) Setting the time...please wait...");
+    Serial.print(F(":) Setting the time...please wait..."));
     setTime(second, minute, hour, dayOfWeek, dayOfMonth, month, year);
     delay(500);
     Serial.print(F("Done!"));
@@ -403,7 +427,6 @@ void debugLoop(){
   }
   if(cmd == "clearLogs"){
     clearLogs();
-    loadLogPosition();
     Serial.print(F(":) Done."));
     Serial.println();
   }
@@ -414,6 +437,17 @@ void debugLoop(){
     }
   }
   if(cmd == "setTime"){ setClockTime(); }
+
+  if(cmd == "config:voltage"){ printVoltageLevels(); }
+  if(cmd == "config:pins"){ printPins(); }
+  if(cmd == "config:motors"){ printMotorLevels(); }
+  if(cmd == "config:drive"){ printDriveConfig(); }
+
+  if(cmd == "dump"){ dataDump(); }
+
+  if(cmd == "readDrive"){ readDrive(); }
+  if(cmd == "clearDrive"){ driveZero(); }
+
   delay(50);
 }
 

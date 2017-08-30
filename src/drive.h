@@ -27,14 +27,15 @@ void clearDrive(){
 void saveToDrive(){
   power_twi_enable();
   delay(1000);
-  uint8_t marker = EEPROM.read(2);
+  unsigned int dataSize = EEPROM.length();
 
-  if(SAVE_TO_DRIVE_AT*(marker+1) > DRIVE_SPACE){ return; } // the drive is full!
+  // Checks if the drive is full, and don't do anything if it is.
+  if(drivePos + dataSize > DRIVE_SPACE){ return; }
 
-  unsigned int address = SAVE_TO_DRIVE_AT*marker;
+  unsigned int address = dataSize*drivePos;
   unsigned int written = 0;
 
-  while(written < 1000){
+  while(written < dataSize) {
     Wire.beginTransmission(DRIVE_ID);
     Wire.write((address+written) >> 8);
     Wire.write((address+written) & 0xFF);
@@ -47,7 +48,7 @@ void saveToDrive(){
     Wire.endTransmission();
     delay(20);
   }
-  EEPROM.write(2, marker+1);
+  
   power_twi_disable();
 }
 

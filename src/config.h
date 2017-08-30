@@ -22,9 +22,9 @@
 // because we won't be calling them anyway.
 #define HAS_DRIVE true
 #define DRIVE_ID 0x57
-#define SAVE_TO_DRIVE_AT 1020
 #define DRIVE_SPACE 32768
-#define DRIVE_WRITE_LIMIT 25
+#define DRIVE_WRITE_LIMIT 0x30
+#define DRIVE_MARKER_BYTE 0x4
 
 // RTC info (DS3231)
 #define HAS_CLOCK true
@@ -62,8 +62,8 @@ const bool motorB = false;
  * divisor = 9.75 / 2.45 = ~3.9795918367 (8/30/17)
  * multiplier = ~0.01727213 (below, 8/30/17)
  */
-const int OVERCHARGE = 850; // between 3.6v, 3.7
-const int SOLAR = 830;      // 3.6v
+const int OVERCHARGE = 810; // between 3.6v, 3.7
+const int SOLAR = 800;      // 3.6v
 const int FULL = 787;       // 3.4v
 const int CHARGED = 764;    // 3.3v
 const int NOMINAL = 741;    // 3.2v
@@ -72,10 +72,15 @@ const int CUTOFF = 680;     // 3.0v
 const int TOLERANCE = 23;   // 12=0.05v 23 = 0.1
 const float VOLTAGE_MULTIPLIER = 4.0 * (9.75/2.45) * (1.11/1023);
 
-// we have 1024 bytes of EEPROM
-// The first 4 bytes is reserved for start time
-unsigned int logPos = 4;
-unsigned int logStart = 4;
+/**
+ * We have 1024 bytes of EEPROM.
+ * The first 4 bytes (0-3) is reserved for start time (bitwiseDate)
+ * The 5th byte (4) is the marker for where we are in the drive.
+ * The 6th byte (5) is reserved, maybe for when we have a larger drive?
+ */
+unsigned int logStart = 6;
+unsigned int logPos = logStart;
+uint8_t drivePos = 0;
 
 // default debugging mode is off
 bool isDebugging = false;

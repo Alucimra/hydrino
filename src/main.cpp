@@ -20,12 +20,15 @@ void startup(){
   analogRead(POWER_CHECK);
   // end analogReference setup
 
-  loadLogPosition();
+  loadDrivePosition();
+  saveReserveData();
+
   if(digitalRead(DEBUG_PIN) == LOW){
     isDebugging = true;
     Serial.begin(9600);
     delay(500);
     Serial.print(F(":) Debugging activated."));
+    Serial.println();
   }
 
   // remove the pullup, conserve some power (hopefully)

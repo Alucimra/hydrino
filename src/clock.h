@@ -1,6 +1,6 @@
 #include <config.h>
 
-#ifndef HYRINO_CLOCK
+#ifndef HYDRINO_CLOCK
 #define HYDRINO_CLOCK
 
 // Convert normal decimal numbers to binary coded decimal
@@ -51,6 +51,7 @@ void readTime(uint8_t *second, uint8_t *minute, uint8_t *hour, uint8_t *dayOfWee
   power_twi_disable();
 }
 
+// NOTE: bisewiseDate signature is different from the rest: there's no dayOfWeek!
 uint32_t dateToBitwiseDate(uint8_t second, uint8_t minute, uint8_t hour, uint8_t dayOfMonth, uint8_t month, uint8_t year){
   uint32_t bitwiseDate = 0;
   year %= 100;

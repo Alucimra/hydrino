@@ -50,21 +50,20 @@ void actionLoop(){
   // Current draw of motors affects voltage readings by 0.01-0.05v
   // It's not big, but I want to see if the analogRead numbers are more stable
   // with the voltage being read with motors off. Also lets us remove all the
+  // 8/30/17 500ms delay doesn't do anything, readings are still bouncing.
   // stopMotor() calls inside the cycles, hopefully saves a few bytes
   stopMotor(motorA);
   stopMotor(motorB);
-  delay(500);
+  delay(1000);
 
   digitalWrite(POWER_ACTIVATE, HIGH);
-  delay(300);
+  delay(500);
   power = analogRead(POWER_CHECK);
-  delay(200);
+  delay(100);
   digitalWrite(POWER_ACTIVATE, LOW);
 
   if(power > SOLAR + TOLERANCE){
-    // Power is higher than the solar panel, which means battery is over-charged.
-    // In actual use, this should only happen when a new fully charged battery
-    // was put in to replace the old battery. We use up power to bring it back down.
+    // There is no battery protection circuit! We're over-charging. Use up power
     runMotor(motorA, STRONG);
     runMotor(motorB, STRONG);
     cycle_time = 6;
