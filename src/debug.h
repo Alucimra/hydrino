@@ -74,15 +74,15 @@ void printMotorLevels(){
   // Hard coded for now, since it's tricky to do it otherwise
   Serial.print(F(":: Motor Timing :> {\""));
   Serial.print(SOLAR+TOLERANCE);
-  Serial.print(F("\":\"AB6 AB6 AB6 AB6\",\""));
+  Serial.print(F("\":\"AB6 AB6 AB6 AB6 100\",\""));
   Serial.print(FULL+TOLERANCE);
-  Serial.print(F("\":\"*3 A4 *7 B4\",\""));
+  Serial.print(F("\":\"*3 A4 *7 B4 44\",\""));
   Serial.print(CHARGED+TOLERANCE);
-  Serial.print(F("\":\"*5 a2 *5 b2\",\""));
+  Serial.print(F("\":\"*5 a2 *5 b2 28\",\""));
   Serial.print(NOMINAL-TOLERANCE);
-  Serial.print(F("\":\"*7 a *7 b\",\""));
+  Serial.print(F("\":\"*7 a *7 b 14\",\""));
   Serial.print(DRAINED-TOLERANCE);
-  Serial.print(F("\":\"*15 a *15 b\",\""));
+  Serial.print(F("\":\"*15 a *15 b 6\",\""));
   Serial.print(CUTOFF);
   Serial.print(F("\":\"*59 a *59 b\",\""));
   Serial.print(F("0\":\"*21 *21 *21 *21\""));
@@ -114,6 +114,16 @@ void clearSerialBuffer(){
 }
 
 void printLogEntry(unsigned int i, uint8_t value){
+  if(i % EEPROM.length() < logStart){
+    Serial.print(i);
+    Serial.print(F("\t"));
+    Serial.print(value);
+    Serial.print(F("\t"));
+    Serial.print("reserved");
+    Serial.println();
+    return;
+  }
+
   Serial.print(i);
   Serial.print(F("\t"));
   if(i % 2 == 0){
@@ -147,6 +157,12 @@ void readDrive(){
     Serial.println();
     return;
   }
+
+  Serial.print(F(":) Reading drive data. This might take a while...please wait..."));
+  Serial.println();
+  Serial.print(F(":: Bytes to read: "));
+  Serial.print(bytes_to_read);
+  Serial.println();
 
   power_twi_enable();
   delay(1000);

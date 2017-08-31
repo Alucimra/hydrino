@@ -64,10 +64,12 @@ void actionLoop(){
 
   if(power > SOLAR + TOLERANCE){
     // There is no battery protection circuit! We're over-charging. Use up power
+    // AB6 AB6 AB6 AB6 1.00
     runMotor(motorA, STRONG);
     runMotor(motorB, STRONG);
     cycle_time = 6;
   } else if(power > FULL + TOLERANCE){
+    // *3 A4 *7 B4 0.44
     if(cycle == 0){
       cycle_time = 3;
     } else if(cycle == 1){
@@ -80,6 +82,7 @@ void actionLoop(){
       cycle_time = 4;
     }
   } else if(power > CHARGED + TOLERANCE){
+    // *5 a2 *5 b2 28
     if(cycle == 0 || cycle == 2){
       cycle_time = 5;
     } else if(cycle == 1){
@@ -90,6 +93,7 @@ void actionLoop(){
       cycle_time = 2;
     }
   } else if(power > NOMINAL - TOLERANCE){
+    // *7 a *7 b 14
     if(cycle == 0 || cycle == 2){
       cycle_time = 7;
     } else if(cycle == 1){
@@ -98,6 +102,7 @@ void actionLoop(){
       runMotor(motorB, WEAK);
     }
   } else if(power > DRAINED - TOLERANCE){
+    // *15 a *15 b 6
     if(cycle == 0 || cycle == 2){
       cycle_time = 15;
     } else if(cycle == 1){
@@ -106,6 +111,7 @@ void actionLoop(){
       runMotor(motorB, WEAK);
     }
   } else if(power > CUTOFF){
+    // *59 a *59 b 2
     if(cycle == 0 || cycle == 2){
       cycle_time = 59;
     } else if(cycle == 1){
@@ -114,6 +120,7 @@ void actionLoop(){
       runMotor(motorB, WEAK);
     }
   } else {
+    // *21 *21 *21 *21 0
     cycle_time = 21;
   }
   saveCycle(power / 4, cycle_time);
