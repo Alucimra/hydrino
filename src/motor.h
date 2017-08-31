@@ -63,26 +63,39 @@ void actionLoop(){
   digitalWrite(POWER_ACTIVATE, LOW);
 
   if(power > SOLAR + TOLERANCE){
-    // There is no battery protection circuit! We're over-charging. Use up power
     // AB6 AB6 AB6 AB6 1.00
+    /**
+     * NOTE: There is no battery protection circuit! We're over-charging!
+     * This is pretty bad because if this happens early enough in the day, the
+     * battery is going to be over-charged. These motors might not be enough to
+     * use up all the solar power on a really bright day.
+     *
+     * Motors are rated at 3v 150mA or about 0.45W, both running should use ~0.9W
+     * TODO: How much power do the motors draw here? (Real check).
+     */
     runMotor(motorA, STRONG);
     runMotor(motorB, STRONG);
     cycle_time = 6;
   } else if(power > FULL + TOLERANCE){
-    // *3 A4 *7 B4 0.44
-    if(cycle == 0){
-      cycle_time = 3;
+    // *5 A4 *5 B4 0.44
+    /**
+     * NOTE: This is where most of the charging happens. A decent amount of the
+     * off cycle is required for proper re-charging...but have to be careful
+     * not to over charge because we don't have any protection!
+     * This is why we're using LiFePO4 batteries, because they can handle the
+     * added abuse of a little over-charging here and there.
+     */
+    if(cycle == 0 || cycle == 2){
+      cycle_time = 5;
     } else if(cycle == 1){
       runMotor(motorA, STRONG);
       cycle_time = 4;
-    } else if(cycle == 2){
-      cycle_time = 7;
     } else if(cycle == 3){
       runMotor(motorB, STRONG);
       cycle_time = 4;
     }
   } else if(power > CHARGED + TOLERANCE){
-    // *5 a2 *5 b2 28
+    // *3 a2 *3 b2 40
     if(cycle == 0 || cycle == 2){
       cycle_time = 5;
     } else if(cycle == 1){
@@ -93,9 +106,13 @@ void actionLoop(){
       cycle_time = 2;
     }
   } else if(power > NOMINAL - TOLERANCE){
-    // *7 a *7 b 14
+    // *3 a *3 b 25
+    /**
+     * NOTE: At this point (3.2v), we should still have a good chunk of the real
+     * battery power (70-80% on a LiFePO4). Most of the night should be here.
+     */
     if(cycle == 0 || cycle == 2){
-      cycle_time = 7;
+      cycle_time = 3;
     } else if(cycle == 1){
       runMotor(motorA, WEAK);
     } else if(cycle == 3){
@@ -103,6 +120,10 @@ void actionLoop(){
     }
   } else if(power > DRAINED - TOLERANCE){
     // *15 a *15 b 6
+    /**
+     * NOTE: Voltage starts to drop sharply starting here; there's less power
+     * than it looks.
+     */
     if(cycle == 0 || cycle == 2){
       cycle_time = 15;
     } else if(cycle == 1){
@@ -111,17 +132,28 @@ void actionLoop(){
       runMotor(motorB, WEAK);
     }
   } else if(power > CUTOFF){
-    // *59 a *59 b 2
+    // *25 a *25 b 4
+    /**
+     * NOTE: There is almost no power left. Ideally this is where it will be in
+     * the early morning, before the sun comes up. Used up most of the power
+     * and leaves room for the battery to charge.
+     */
     if(cycle == 0 || cycle == 2){
-      cycle_time = 59;
+      cycle_time = 25;
     } else if(cycle == 1){
       runMotor(motorA, WEAK);
     } else if(cycle == 3){
       runMotor(motorB, WEAK);
     }
   } else {
-    // *21 *21 *21 *21 0
-    cycle_time = 21;
+    // *31 *31 *31 *31 0
+    /**
+     * NOTE: There's (almost) no power left. We need to conserve energy.
+     * The chip stops working properly at 2.7-2.9v. The power led and clocks run
+     * but it doesn't really work like it should, sometimes stalls!
+     * It's operating out of spec when it reaches here. Should avoid.
+     */
+    cycle_time = 31;
   }
   saveCycle(power / 4, cycle_time);
 

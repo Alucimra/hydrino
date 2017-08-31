@@ -76,16 +76,16 @@ void printMotorLevels(){
   Serial.print(SOLAR+TOLERANCE);
   Serial.print(F("\":\"AB6 AB6 AB6 AB6 100\",\""));
   Serial.print(FULL+TOLERANCE);
-  Serial.print(F("\":\"*3 A4 *7 B4 44\",\""));
+  Serial.print(F("\":\"*5 A4 *5 B4 44\",\""));
   Serial.print(CHARGED+TOLERANCE);
-  Serial.print(F("\":\"*5 a2 *5 b2 28\",\""));
+  Serial.print(F("\":\"*3 a2 *3 b2 40\",\""));
   Serial.print(NOMINAL-TOLERANCE);
-  Serial.print(F("\":\"*7 a *7 b 14\",\""));
+  Serial.print(F("\":\"*3 a *3 b 25\",\""));
   Serial.print(DRAINED-TOLERANCE);
   Serial.print(F("\":\"*15 a *15 b 6\",\""));
   Serial.print(CUTOFF);
-  Serial.print(F("\":\"*59 a *59 b\",\""));
-  Serial.print(F("0\":\"*21 *21 *21 *21\""));
+  Serial.print(F("\":\"*25 a *25 b 4\",\""));
+  Serial.print(F("0\":\"*31 *31 *31 *31 0\""));
   Serial.print(F("}"));
   Serial.println();
 }
