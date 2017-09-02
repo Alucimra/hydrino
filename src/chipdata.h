@@ -42,12 +42,13 @@ void clearLogs(){
  * bytes (+4 bytes for current time). This saves power at the expense of more
  * chip EEPROM cycles.
  */
+#define CYCLE_SIZE 0x2
 void saveCycle(uint8_t power, uint8_t cycle_time){
   // don't save data when we're debugging
   if(isDebugging){ return; }
 
   // FIXME: theoretically, this should not ever shappen...
-  if(logPos % 2 != logStart % 2){ logPos++; }
+  //if(logPos % CYCLE_SIZE != logStart % CYCLE_SIZE){ logPos++; }
 
   /**
    * logPos at index 1023 means we're at the 1024th byte (EEPROM.length())
@@ -55,7 +56,7 @@ void saveCycle(uint8_t power, uint8_t cycle_time){
    * eg, at 1021+2 >= 1024 (f) but 1022+2 >= 1024 (t)
    * This should be avoided since we have the drive backup in place.
    */
-  if((logPos + 2) >= EEPROM.length()){ logPos = logStart; }
+  if((logPos + CYCLE_SIZE) >= EEPROM.length()){ logPos = logStart; }
 
   /**
    * The power on odd byte, then cycle+cycle_time next (even).
@@ -76,9 +77,9 @@ void saveCycle(uint8_t power, uint8_t cycle_time){
   /**
    * Write zeros to keep our position since we no longer write logPos.
    * Obviously, if we're already at the end, then we can't write ahead 2 bytes.
-   * NOTE: This conditional should be the same as the logPos reset check above.
+   * NOTE: This conditional should be *inverted* of logPos reset check above
    */
-  if((logPos + 2) >= EEPROM.length()){
+  if((logPos + CYCLE_SIZE) <= EEPROM.length()){
     EEPROM.write(logPos, 0);
     EEPROM.write(logPos + 1, 0);
     delay(500);
@@ -86,11 +87,10 @@ void saveCycle(uint8_t power, uint8_t cycle_time){
 
   #if(HAS_DRIVE)
   /**
-   * Assuming we're at logPos=1023, then we're at the (1023+1)th byte.
    * If we're at the end, then save to drive.
    * NOTE: This conditional should be the same as the logPos reset check above.
    */
-  if((logPos + 2) >= EEPROM.length()){
+  if((logPos + CYCLE_SIZE) >= EEPROM.length()){
     saveToDrive();
     drivePos++;
     saveReserveData();
