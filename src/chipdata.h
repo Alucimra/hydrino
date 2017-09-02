@@ -49,9 +49,13 @@ void saveCycle(uint8_t power, uint8_t cycle_time){
   // FIXME: theoretically, this should not ever shappen...
   if(logPos % 2 != logStart % 2){ logPos++; }
 
-  // we will overflow, cycle back around to the start
-  // this shouldn't happen with the extra drive backup in place
-  if((logPos + 1) >= EEPROM.length()){ logPos = logStart; }
+  /**
+   * logPos at index 1023 means we're at the 1024th byte (EEPROM.length())
+   * We need to make sure there are at least 2 bytes available to write.
+   * eg, at 1021+2 >= 1024 (f) but 1022+2 >= 1024 (t)
+   * This should be avoided since we have the drive backup in place.
+   */
+  if((logPos + 2) >= EEPROM.length()){ logPos = logStart; }
 
   /**
    * The power on odd byte, then cycle+cycle_time next (even).
@@ -69,14 +73,24 @@ void saveCycle(uint8_t power, uint8_t cycle_time){
   }
   delay(500);
 
-  if(logPos + 2 < EEPROM.length()){
+  /**
+   * Write zeros to keep our position since we no longer write logPos.
+   * Obviously, if we're already at the end, then we can't write ahead 2 bytes.
+   * NOTE: This conditional should be the same as the logPos reset check above.
+   */
+  if((logPos + 2) >= EEPROM.length()){
     EEPROM.write(logPos, 0);
     EEPROM.write(logPos + 1, 0);
     delay(500);
   }
 
   #if(HAS_DRIVE)
-  if(logPos + 1 >= EEPROM.length()){
+  /**
+   * Assuming we're at logPos=1023, then we're at the (1023+1)th byte.
+   * If we're at the end, then save to drive.
+   * NOTE: This conditional should be the same as the logPos reset check above.
+   */
+  if((logPos + 2) >= EEPROM.length()){
     saveToDrive();
     drivePos++;
     saveReserveData();

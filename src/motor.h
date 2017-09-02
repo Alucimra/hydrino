@@ -51,6 +51,7 @@ void actionLoop(){
   // It's not big, but I want to see if the analogRead numbers are more stable
   // with the voltage being read with motors off. Also lets us remove all the
   // 8/30/17 500ms delay doesn't do anything, readings are still bouncing.
+  // 9/2/17 uploaded a 1000ms delay. remove if it has no effect.
   // stopMotor() calls inside the cycles, hopefully saves a few bytes
   stopMotor(motorA);
   stopMotor(motorB);
