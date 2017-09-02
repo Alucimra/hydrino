@@ -51,7 +51,7 @@ void saveCycle(uint8_t power, uint8_t cycle_time){
 
   // we will overflow, cycle back around to the start
   // this shouldn't happen with the extra drive backup in place
-  if((logPos + 2) > EEPROM.length()){ logPos = logStart; }
+  if((logPos + 1) >= EEPROM.length()){ logPos = logStart; }
 
   /**
    * The power on odd byte, then cycle+cycle_time next (even).
@@ -76,7 +76,7 @@ void saveCycle(uint8_t power, uint8_t cycle_time){
   }
 
   #if(HAS_DRIVE)
-  if(logPos >= EEPROM.length()){
+  if(logPos + 1 >= EEPROM.length()){
     saveToDrive();
     drivePos++;
     saveReserveData();
