@@ -51,7 +51,7 @@ void saveCycle(uint8_t power, uint8_t cycle_time){
 
   // we will overflow, cycle back around to the start
   // this shouldn't happen with the extra drive backup in place
-  if((logPos + 2) >= EEPROM.length()){ logPos = logStart; }
+  if((logPos + 2) > EEPROM.length()){ logPos = logStart; }
 
   /**
    * The power on odd byte, then cycle+cycle_time next (even).
