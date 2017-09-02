@@ -35,7 +35,11 @@ function parseData(){
   parsedData.reservedBytes = parseConfig(logs, /:: Reserved Bytes :> ({.+})/);
 
   var x = logs.split(":) Reading leftovers");
-  logs = x[1].replace(/^[:=].+\n/gm, '') +  x[0].replace(/^[:=].+\n/gm, '');
+  if(x[1]){
+    logs = x[1].replace(/^[:=].+\n/gm, '') +  x[0].replace(/^[:=].+\n/gm, '');
+  } else {
+    logs = logs.replace(/^[:=].+\n/gm, '');
+  }
 
   // TODO: add more checks, the first line should be an odd number
 

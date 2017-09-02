@@ -6,9 +6,9 @@
     <script src="./js/popper.min.js"></script>
     <script src="./js/popper-utils.min.js"></script>
     <script src="./bootstrap-4.0.0b/js/bootstrap.min.js"></script>
-    <script src="./js/d3.min.js"></script>
+    <script src="./js/d3.v4/d3.v4.min.js"></script>
     <link rel="stylesheet" href="./bootstrap-4.0.0b/css/bootstrap.min.css"/>
-    <link re="stylesheet" href="./css/d3ss.css" />
+    <link rel="stylesheet" href="./css/d3ss.css" />
   </head>
   <body>
     <div class="container-fluid d3ss" id="chart">
@@ -64,18 +64,8 @@
         $('#on_off_times').click(function(){
           parseData();
           clearChart();
-          var chart = nv.models.multiBarChart()
-            .margin({top: 50, bottom: 30, left: 40, right: 10});;
 
 
-          chart.xAxis.tickFormat(d3.format(',f'));
-          chart.yAxis.tickFormat(d3.format(',.1f'));
-
-          d3.select('#chart svg')
-              .datum(cycleData()).transition().duration(500)
-              .call(chart);
-
-          nv.utils.windowResize(chart.update);
 
           window.chart = chart;
         });
