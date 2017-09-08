@@ -79,7 +79,7 @@ void saveCycle(uint8_t power, uint8_t cycle_time){
    * Obviously, if we're already at the end, then we can't write ahead 2 bytes.
    * NOTE: This conditional should be *inverted* of logPos reset check above
    */
-  if((logPos + CYCLE_SIZE) <= EEPROM.length()){
+  if((logPos + CYCLE_SIZE) < EEPROM.length()){
     EEPROM.write(logPos, 0);
     EEPROM.write(logPos + 1, 0);
     delay(500);

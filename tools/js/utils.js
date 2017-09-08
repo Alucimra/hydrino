@@ -58,7 +58,7 @@ function parseData(){
     // if(col1 === 0 && pos % 2 == 1){ return; }
 
     // neither cycle_time nor voltage will ever equal 0
-    if(volts_or_cycleTime === 0){ return; }
+    if(volts_or_cycleTime === 0 || volts_or_cycleTime === NaN){ return; }
 
     if(pos % 2 == 1){
       // odd, read voltage

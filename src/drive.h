@@ -17,7 +17,7 @@ void clearDrive(){
       written++;
     }
     Wire.endTransmission();
-    delay(20); // with the 20ms delay, it takes ~26.2 seconds to clear the drive
+    delay(50); // with a 20ms delay, it takes ~26.2 seconds to clear the drive
   }
   power_twi_disable();
   delay(50);
@@ -37,18 +37,29 @@ void saveToDrive(){
 
   while(written < dataSize) {
     Wire.beginTransmission(DRIVE_ID);
-    Wire.write((address+written) >> 8);
-    Wire.write((address+written) & 0xFF);
-    for(uint8_t i=0; i < DRIVE_WRITE_LIMIT; i++){
-      Wire.write(EEPROM.read(written+logStart));
-      written++;
+
+    /**
+     * Hack to make sure we have a handle on the EEPROM. Otherwise transmissions
+     * might be ignored. (Ends up skipping a chunk of data.)
+     */
+    if(Wire.endTransmission() == 0){
+      Wire.beginTransmission(DRIVE_ID);
+      Wire.write((address+written) >> 8);
+      Wire.write((address+written) & 0xFF);
+      for(uint8_t i=0; i < DRIVE_WRITE_LIMIT; i++){
+        Wire.write(EEPROM.read(written));
+        written++;
+      }
+      // NOTE: i2c transmissions are limited to 32 bytes, first 2 is used for addr
+      // so we can only write 30 bytes max in the loop above.
+      Wire.endTransmission();
     }
-    // NOTE: i2c transmissions are limited to 32 bytes, first 2 is used for addr
-    // so we can only write 30 bytes max in the loop above.
-    Wire.endTransmission();
-    delay(20);
+    // gettings 0 in the write to drive, it's weird. So I'm increasing the wait
+    // in case the drive is too slow on the seek? It's too consistent.
+    // 64 bytes good, and then 32 bytes of zeros.
+    delay(200);
   }
-  
+
   power_twi_disable();
 }
 
