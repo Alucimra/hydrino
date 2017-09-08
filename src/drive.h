@@ -54,10 +54,7 @@ void saveToDrive(){
       // so we can only write 30 bytes max in the loop above.
       Wire.endTransmission();
     }
-    // gettings 0 in the write to drive, it's weird. So I'm increasing the wait
-    // in case the drive is too slow on the seek? It's too consistent.
-    // 64 bytes good, and then 32 bytes of zeros.
-    delay(200);
+    delay(50);
   }
 
   power_twi_disable();
