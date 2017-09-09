@@ -34,8 +34,15 @@ void saveToDrive(){
 
   unsigned int address = dataSize*drivePos;
   unsigned int written = 0;
+  uint8_t allowLoop = dataSize / 2;
 
-  while(written < dataSize) {
+  /**
+   * loopRuns is used to avoid infinitely looping in the loop if the chip is
+   * not responding or erroring on the Wire.endTransmission() hack below.
+   * The original value of dataSize / 2 is very liberal, ideally it only runs
+   * (dataSize / DRIVE_WRITE_LIMIT) times.
+   */
+  while(written < dataSize && allowLoop > 0) {
     Wire.beginTransmission(DRIVE_ID);
 
     /**
@@ -53,7 +60,9 @@ void saveToDrive(){
       // NOTE: i2c transmissions are limited to 32 bytes, first 2 is used for addr
       // so we can only write 30 bytes max in the loop above.
       Wire.endTransmission();
+      delay(25);
     }
+    allowLoop--;
     delay(50);
   }
 

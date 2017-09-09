@@ -42,20 +42,19 @@ void stopMotor(bool useMotorA){
 // There's the expectation that odd cycle_time (except 1) means an off cycle.
 // This expectation is used for graphing. See tools/chart.html
 void actionLoop(){
+  /**
+   * FIXME: due to other stuff happening (drive writes, etc) causing delays, the
+   * sleep_for is no longer indicative of the correct sleep time and can stretch
+   * quite a bit if there's a deadlock. Consider switching to sleep_until by
+   * using millis(), or keep sleep_for and add sleep_until to reset sleep_for
+   */
   while(sleep_for > 0){ sleep_mode(); }
 
   uint8_t cycle_time = 1;
   int power = 0;
 
-  // Current draw of motors affects voltage readings by 0.01-0.05v
-  // It's not big, but I want to see if the analogRead numbers are more stable
-  // with the voltage being read with motors off. Also lets us remove all the
-  // 8/30/17 500ms delay doesn't do anything, readings are still bouncing.
-  // 9/2/17 uploaded a 1000ms delay. remove if it has no effect.
-  // stopMotor() calls inside the cycles, hopefully saves a few bytes
   stopMotor(motorA);
   stopMotor(motorB);
-  delay(1000);
 
   digitalWrite(POWER_ACTIVATE, HIGH);
   delay(500);

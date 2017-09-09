@@ -173,13 +173,13 @@ void readDrive(){
     Wire.write(read >> 8);
     Wire.write(read & 0xFF);
     Wire.endTransmission();
-    delay(10);
-    Wire.requestFrom(DRIVE_ID, 30); // only read 30 bytes at a time
+    delay(20);
+    Wire.requestFrom(DRIVE_ID, DRIVE_WRITE_LIMIT);
     while(Wire.available()){
       printLogEntry(read, Wire.read());
       read++;
     }
-    delay(10);
+    delay(20);
   }
   power_twi_disable();
 }
