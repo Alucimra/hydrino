@@ -408,7 +408,7 @@ module flexbatterAAAx4(){ // AUTO_MAKE_STL
 */
 
 //flexbatter32650(n=1);
-flexbatter(n=1,ew=0.8,l=65.3,d=26.5,hf=0.75,shd=0,eps=0, bulges=false, symbols=false, wire_channel=false, chamfer=false);
+flexbatter(n=2,ew=0.8,l=65.3,d=26.5,hf=0.75,shd=0,eps=0, bulges=false, symbols=false, wire_channel=false, chamfer=false);
 //flexbatter18650(n=1);
 
 // uncomment as needed:
