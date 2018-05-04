@@ -1,6 +1,9 @@
 #include <config.h>
 #include <motor.h>
 
+ISR(TIMER1_OVF_vect){
+}
+
 void startup(){
   digitalWrite(BATTERY_CHECK, HIGH);
   // First few readings after changing analogReference is unreliable, dump them
@@ -18,9 +21,12 @@ void startup(){
   analogRead(BATTERY_SENSE);
 
   // TODO: Code to disable charging if the battery is nearing overcharge
-  digitalWrite(CHARGE_ON, HIGH);
+  //digitalWrite(CHARGE_ON, HIGH);
+  #if DEBUG
+  Serial.begin(9600);
+  while(!Serial){}
+  #endif
 }
-
 
 void setup(){
   pinMode(MOTOR_ON, OUTPUT);
@@ -35,7 +41,6 @@ void setup(){
 
   // timers setup
   // http://donalmorrissey.blogspot.com/2011/11/sleeping-arduino-part-4-wake-up-via.html
-  set_sleep_mode(SLEEP_MODE_IDLE);
 
   // currently not using i2c and SPI, so we can disable those clocks
   power_twi_disable();

@@ -13,26 +13,48 @@ unsigned long currentCycleStop = 0;
 unsigned long lastMotorLoopAt = 0;
 bool loopAround = false;
 
-bool MOTOR_DEBUG = true;
-const unsigned long onCycleTime = MOTOR_DEBUG ? 5000 : 30000;
-const unsigned long offCycleTime = MOTOR_DEBUG ? 20000 : 330000;
-
+#if DEBUG
+  const unsigned long onCycleTime = 5000;
+  const unsigned long offCycleTime = 20000;
+#else
+  const unsigned long onCycleTime = 30000;
+  const unsigned long offCycleTime = 330000;
+#endif
 
 void startMotor(){
-  digitalWrite(MOTOR_ON, HIGH);
+  digitalWrite(MOTOR_ON, LOW);
   isMotorOn = true;
   digitalWrite(LED_BUILTIN, HIGH);
+  #if DEBUG
+    Serial.println(F("call startMotor() completed"));
+  #endif
 }
 
 void stopMotor(){
-  digitalWrite(MOTOR_ON, LOW);
+  digitalWrite(MOTOR_ON, HIGH);
   isMotorOn = false;
   digitalWrite(LED_BUILTIN, LOW);
+  #if DEBUG
+    Serial.println(F("call stopMotor() completed"));
+  #endif
 }
 
 
 void motorLoop(){
   lastMotorLoopAt = millis();
+
+  #if DEBUG
+    Serial.println(F("inside motorLoop()"));
+    Serial.print(F("\tlastMotorLoopAt = "));
+    Serial.println(lastMotorLoopAt);
+    Serial.print(F("\tloopAround = "));
+    Serial.println(loopAround);
+    Serial.print(F("\tcurrentCycleStart = "));
+    Serial.println(currentCycleStart);
+    Serial.print(F("\tcurrentCycleStop = "));
+    Serial.println(currentCycleStop);
+    Serial.println();
+  #endif
 
   if(((!loopAround && lastMotorLoopAt > currentCycleStart) || (loopAround && lastMotorLoopAt < currentCycleStart)) && lastMotorLoopAt > currentCycleStop){
     if(isMotorOn){
@@ -46,8 +68,21 @@ void motorLoop(){
     }
     loopAround = (currentCycleStop < currentCycleStart);
   }
+  #if DEBUG
+    else {
+      Serial.println(F("\t...not ready."));
+    }
+  #endif
 
+  #if DEBUG
+    Serial.println(F("done. Sleeping..."));
+  #endif
+
+  set_sleep_mode(SLEEP_MODE_IDLE);
+  sleep_enable();
   sleep_mode();
+  sleep_disable();
+
 }
 
 #endif

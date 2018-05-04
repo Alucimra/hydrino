@@ -14,5 +14,7 @@
 #define CHARGE_ON 9
 //#define DEBUG_PIN
 
+#define DEBUG false
+
 // HYDRINO_CONFIG
 #endif
