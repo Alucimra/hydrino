@@ -1,6 +1,9 @@
 #include <config.h>
 #include <motor.h>
 
+
+// This macro needs to be called in order for sleep to work
+// It needs to exist even though we are not doing anything inside
 ISR(TIMER1_OVF_vect){
 }
 
@@ -9,11 +12,11 @@ void startup(){
   // First few readings after changing analogReference is unreliable, dump them
   // TODO: These delays are probably unnecessary
   analogRead(BATTERY_SENSE);
-  delay(500);
+  delay(50);
   analogRead(BATTERY_SENSE);
-  delay(300);
+  delay(30);
   analogRead(BATTERY_SENSE);
-  delay(200);
+  delay(20);
   analogRead(BATTERY_SENSE);
   // end analogReference setup
   digitalWrite(BATTERY_CHECK, LOW);
@@ -22,9 +25,10 @@ void startup(){
 
   // TODO: Code to disable charging if the battery is nearing overcharge
   //digitalWrite(CHARGE_ON, HIGH);
+
   #if DEBUG
-  Serial.begin(9600);
-  while(!Serial){}
+    Serial.begin(9600);
+    while(!Serial){}
   #endif
 }
 

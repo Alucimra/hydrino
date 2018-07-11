@@ -13,16 +13,18 @@ unsigned long currentCycleStop = 0;
 unsigned long lastMotorLoopAt = 0;
 bool loopAround = false;
 
+// TODO: Convert this to a config setting
+// FIXME: Do we need to use long? The numbers will fit an int
 #if DEBUG
   const unsigned long onCycleTime = 5000;
   const unsigned long offCycleTime = 20000;
 #else
-  const unsigned long onCycleTime = 30000;
-  const unsigned long offCycleTime = 330000;
+  const unsigned long onCycleTime = 50000;
+  const unsigned long offCycleTime = 250000;
 #endif
 
 void startMotor(){
-  digitalWrite(MOTOR_ON, LOW);
+  digitalWrite(MOTOR_ON, HIGH);
   isMotorOn = true;
   digitalWrite(LED_BUILTIN, HIGH);
   #if DEBUG
@@ -31,7 +33,7 @@ void startMotor(){
 }
 
 void stopMotor(){
-  digitalWrite(MOTOR_ON, HIGH);
+  digitalWrite(MOTOR_ON, LOW);
   isMotorOn = false;
   digitalWrite(LED_BUILTIN, LOW);
   #if DEBUG
@@ -75,14 +77,18 @@ void motorLoop(){
   #endif
 
   #if DEBUG
-    Serial.println(F("done. Sleeping..."));
+    /* In the SLEEP_MODE_IDLE, UART interrupts (from serial) wakes the system
+     * this means the Arduino never gets a chance to actually sleep.
+     * We use the blocking delay() instead to emulate sleep when in debug mode.
+     */
+    Serial.println(F("done. Sleeping...*note: debug mode uses delay()"));
+    delay(4090);
+  #else
+    set_sleep_mode(SLEEP_MODE_IDLE);
+    sleep_enable();
+    sleep_mode();
+    sleep_disable();
   #endif
-
-  set_sleep_mode(SLEEP_MODE_IDLE);
-  sleep_enable();
-  sleep_mode();
-  sleep_disable();
-
 }
 
 #endif
