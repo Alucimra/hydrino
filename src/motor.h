@@ -19,8 +19,8 @@ bool loopAround = false;
   const unsigned long onCycleTime = 5000;
   const unsigned long offCycleTime = 20000;
 #else
-  const unsigned long onCycleTime = 50000;
-  const unsigned long offCycleTime = 250000;
+  const unsigned long onCycleTime = CYCLE_ON_TIME;
+  const unsigned long offCycleTime = CYCLE_OFF_MULT * CYCLE_ON_TIME;
 #endif
 
 void startMotor(){
