@@ -8,7 +8,6 @@ ISR(TIMER1_OVF_vect){
 }
 
 void startup(){
-  digitalWrite(BATTERY_CHECK, HIGH);
   // First few readings after changing analogReference is unreliable, dump them
   // TODO: These delays are probably unnecessary
   analogRead(BATTERY_SENSE);
@@ -19,7 +18,6 @@ void startup(){
   delay(20);
   analogRead(BATTERY_SENSE);
   // end analogReference setup
-  digitalWrite(BATTERY_CHECK, LOW);
   delay(200);
   analogRead(BATTERY_SENSE);
 
@@ -34,9 +32,7 @@ void startup(){
 
 void setup(){
   pinMode(MOTOR_ON, OUTPUT);
-  pinMode(BATTERY_CHECK, OUTPUT);
   pinMode(BATTERY_SENSE, INPUT);
-  pinMode(CHARGE_ON, OUTPUT);
   pinMode(LED_BUILTIN, OUTPUT);
 
   // we do not have a stable external reference voltage because we are battery

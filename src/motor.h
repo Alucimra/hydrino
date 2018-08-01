@@ -1,27 +1,12 @@
 #include <config.h>
+#include <cycling.h>
 
 #ifndef HYDRINO_MOTOR
 #define HYDRINO_MOTOR
 
 bool isMotorOn = false;
-
-// TODO: Move the cycling code to a separate cycling.h (like we had before)
-// TODO: Review the old cycle timing math, maybe cut down to just
-//       OVERCHARGE, STANDARD, LOW options
-unsigned long currentCycleStart = 0;
-unsigned long currentCycleStop = 0;
-unsigned long lastMotorLoopAt = 0;
 bool loopAround = false;
-
-// TODO: Convert this to a config setting
-// FIXME: Do we need to use long? The numbers will fit an int
-#if DEBUG
-  const unsigned long onCycleTime = 5000;
-  const unsigned long offCycleTime = 20000;
-#else
-  const unsigned long onCycleTime = CYCLE_ON_TIME;
-  const unsigned long offCycleTime = CYCLE_OFF_MULT * CYCLE_ON_TIME;
-#endif
+unsigned long lastMotorLoopAt = 0;
 
 void startMotor(){
   digitalWrite(MOTOR_ON, HIGH);
@@ -40,7 +25,6 @@ void stopMotor(){
     Serial.println(F("call stopMotor() completed"));
   #endif
 }
-
 
 void motorLoop(){
   lastMotorLoopAt = millis();
@@ -62,11 +46,11 @@ void motorLoop(){
     if(isMotorOn){
       stopMotor();
       currentCycleStart = lastMotorLoopAt;
-      currentCycleStop = currentCycleStart + offCycleTime;
+      currentCycleStop = getOffCycleTime(currentCycleStart);
     } else {
       startMotor();
       currentCycleStart = lastMotorLoopAt;
-      currentCycleStop = currentCycleStart + onCycleTime;
+      currentCycleStop = getOnCycleTime(currentCycleStart);
     }
     loopAround = (currentCycleStop < currentCycleStart);
   }

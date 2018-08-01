@@ -2,16 +2,15 @@
 #include <avr/power.h>
 #include <avr/sleep.h>
 #include <Wire.h>
-#include <EEPROM.h>
+//#include <EEPROM.h>
 
 #ifndef HYDRINO_CONFIG
 #define HYDRINO_CONFIG
 
 // Pins
 #define MOTOR_ON 3
-#define BATTERY_CHECK 2
-#define BATTERY_SENSE A3
-#define CHARGE_ON 9
+#define BATTERY_SENSE A0
+//#define CHARGE_ON 9
 //#define DEBUG_PIN
 
 #define DEBUG false
@@ -24,8 +23,13 @@
  * will be on for 30 seconds, and off for 90 seconds,
  * ie. it's on for 30 seconds every 2 minutes.
  */
-const unsigned long CYCLE_ON_TIME = 30000;
-const unsigned long CYCLE_OFF_MULT = 9;
+const uint32_t CYCLE_ON_TIME = 30000;
+const uint8_t CYCLE_OFF_MULT = 13;
+const uint16_t BATTERY_OVERCHARGE = 1010;
+const uint16_t BATTERY_MAX = 1000;
+const uint16_t BATTERY_FLEX = 980;
+const uint16_t BATTERY_MIN = 940;
+const uint8_t CYCLE_FLEX_THRESHOLD = 5;
 
 // HYDRINO_CONFIG
 #endif
