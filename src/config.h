@@ -23,12 +23,19 @@
  * will be on for 30 seconds, and off for 90 seconds,
  * ie. it's on for 30 seconds every 2 minutes.
  */
-const uint32_t CYCLE_ON_TIME = 30000;
-const uint8_t CYCLE_OFF_MULT = 13;
-const uint16_t BATTERY_OVERCHARGE = 1010;
-const uint16_t BATTERY_MAX = 1000;
-const uint16_t BATTERY_FLEX = 980;
-const uint16_t BATTERY_MIN = 940;
+
+#if DEBUG
+  const uint32_t CYCLE_ON_TIME = 5000;
+  const uint8_t CYCLE_OFF_MULT = 5;
+#else
+  const uint32_t CYCLE_ON_TIME = 30000;
+  const uint8_t CYCLE_OFF_MULT = 13;
+#endif
+
+const uint16_t BATTERY_OVERCHARGE = 1010; //3.258v -> 6.516
+const uint16_t BATTERY_MAX = 1000; // 3.23v -> 6.46
+const uint16_t BATTERY_FLEX = 980; // 3.16v -> 6.32
+const uint16_t BATTERY_MIN = 930; // 3.0v -> 6.0
 const uint8_t CYCLE_FLEX_THRESHOLD = 5;
 
 // HYDRINO_CONFIG

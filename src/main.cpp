@@ -8,17 +8,12 @@ ISR(TIMER1_OVF_vect){
 }
 
 void startup(){
-  // First few readings after changing analogReference is unreliable, dump them
-  // TODO: These delays are probably unnecessary
   analogRead(BATTERY_SENSE);
   delay(50);
   analogRead(BATTERY_SENSE);
   delay(30);
   analogRead(BATTERY_SENSE);
   delay(20);
-  analogRead(BATTERY_SENSE);
-  // end analogReference setup
-  delay(200);
   analogRead(BATTERY_SENSE);
 
   // TODO: Code to disable charging if the battery is nearing overcharge
@@ -34,10 +29,6 @@ void setup(){
   pinMode(MOTOR_ON, OUTPUT);
   pinMode(BATTERY_SENSE, INPUT);
   pinMode(LED_BUILTIN, OUTPUT);
-
-  // we do not have a stable external reference voltage because we are battery
-  // powered on VCC, so we have to use the 1.1v on-chip reference
-  analogReference(INTERNAL);
 
   // timers setup
   // http://donalmorrissey.blogspot.com/2011/11/sleeping-arduino-part-4-wake-up-via.html
