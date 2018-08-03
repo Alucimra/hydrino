@@ -1,6 +1,6 @@
 #include <config.h>
 #include <motor.h>
-
+#include <debug.h>
 
 // This macro needs to be called in order for sleep to work
 // It needs to exist even though we are not doing anything inside
@@ -22,6 +22,7 @@ void startup(){
   #if DEBUG
     Serial.begin(9600);
     while(!Serial){}
+    Serial.setTimeout(2000);
   #endif
 }
 
@@ -33,8 +34,7 @@ void setup(){
   // timers setup
   // http://donalmorrissey.blogspot.com/2011/11/sleeping-arduino-part-4-wake-up-via.html
 
-  // currently not using i2c and SPI, so we can disable those clocks
-  power_twi_disable();
+  //power_twi_disable();
   power_spi_disable();
 
   // timers setup
@@ -48,6 +48,11 @@ void setup(){
 }
 
 void loop(){
-  // NOTE: Motor loop is where sleep happens, so should always be at the end
-  motorLoop();
+  #if DEBUG
+    debugLoop();
+  #else
+
+    // NOTE: Motor loop is where sleep happens, so should always be at the end
+    motorLoop();
+  #endif
 }
