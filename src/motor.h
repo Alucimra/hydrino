@@ -7,6 +7,7 @@
 bool isMotorOn = false;
 bool loopAround = false;
 unsigned long lastMotorLoopAt = 0;
+uint8_t onCycleCount = 0;
 
 void startMotor(){
   digitalWrite(MOTOR_ON, HIGH);

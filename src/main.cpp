@@ -1,4 +1,5 @@
 #include <config.h>
+#include <log.h>
 #include <motor.h>
 #include <debug.h>
 
@@ -23,6 +24,10 @@ void startup(){
     Serial.begin(9600);
     while(!Serial){}
     Serial.setTimeout(2000);
+  #endif
+
+  #if LOG_ENABLE
+    setLogPosition();
   #endif
 }
 
@@ -51,6 +56,8 @@ void loop(){
   #if DEBUG
     debugLoop();
   #else
+
+    logLoop();
 
     // NOTE: Motor loop is where sleep happens, so should always be at the end
     motorLoop();

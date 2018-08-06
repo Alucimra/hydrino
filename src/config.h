@@ -2,7 +2,7 @@
 #include <avr/power.h>
 #include <avr/sleep.h>
 #include <Wire.h>
-//#include <EEPROM.h>
+#include <EEPROM.h>
 
 #ifndef HYDRINO_CONFIG
 #define HYDRINO_CONFIG
@@ -13,7 +13,12 @@
 //#define CHARGE_ON 9
 //#define DEBUG_PIN
 
-#define DEBUG false
+// flip the on-off status of motors (default is on is high, off is low)
+// set to true this variable flips it (on is low, off is high)
+#define MOTOR_ON_FLIP true
+
+
+#define DEBUG true
 
 /* Cycle time calculations
  * CYCLE_ON_TIME is the amount of time (microseconds) that the motor is on
@@ -41,18 +46,21 @@ const uint8_t CYCLE_FLEX_THRESHOLD = 5;
 
 // Drive info (AT24C32)
 #define DRIVE_ID 0x57
-const uint16_t DRIVE_SPACE = 32768;
+const uint16_t DRIVE_SPACE = 4096; //32768;
 const uint8_t DRIVE_WRITE_LIMIT = 0x30;
 const uint8_t DRIVE_MARKER_BYTE = 0x4;
+
 
 // RTC info (DS3231)
 #define DS3231_ID 0x68
 
-// Temperature Sensor (DS3231)
-#define DS3231_TEMPERATURE_MSB 0x11
-#define DS3231_TEMPERATURE_LSB 0X12
 
-#define LOG_POWER true
+// Logs
+#define LOG_ENABLE true
+const uint16_t LOG_EVERY = 60000;
+const uint16_t LOG_MARKER_START = 569;
+const uint16_t LOG_MARKER_STOP = 1023;
+
 
 
 

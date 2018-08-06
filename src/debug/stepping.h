@@ -12,7 +12,7 @@ void debugStepping(){
   stepCounter = Serial.parseInt();
   if(stepCounter < 0){
     isStepping = false;
-    Serial.print(F(":| Cancelled."))
+    Serial.print(F(":| Cancelled."));
   } else if(stepCounter == 0){
     isStepping = true;
     autoStep = true;
@@ -22,7 +22,7 @@ void debugStepping(){
     autoStep = false;
     Serial.print(F(":) Ok, stepping for "));
     Serial.print(stepCounter);
-    Serial.print(F(" cycles"))
+    Serial.print(F(" cycles"));
     Serial.println();
   }
 }

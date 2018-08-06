@@ -19,20 +19,19 @@ struct rtc_dt {
   //uint8_t extra:4;
 };
 
-struct rtc_bytes {
-  uint8_t one;
-  uint8_t two;
-  uint8_t three;
-  uint8_t four;
-  uint8_t extra;
-};
-
 union rtc_datetime {
   struct rtc_dt datetime;
-  struct rtc_bytes bytes;
+  uint8_t bytes[5];
 };
 
 typedef union rtc_datetime rtc_datetime_t;
+
+union rtc_temp {
+  int temp;
+  uint8_t bytes[2];
+};
+
+typedef union rtc_temp rtc_temp_t;
 
 
 // Convert normal decimal numbers to binary coded decimal
@@ -48,7 +47,16 @@ uint8_t bcdToDec(uint8_t val) { return( (val/16*10) + (val%16) ); }
     rtc_datetime_t blank;
     return blank;
   }
+
+  rtc_temp_t getTemperature(){
+    rtc_temp_t blank;
+    return blank;
+  }
 #else
+  // Temperature Sensor (DS3231)
+  #define DS3231_TEMPERATURE_MSB 0x11
+  #define DS3231_TEMPERATURE_LSB 0X12
+
   void setTime(rtc_datetime_t *newTime) {
     // sets time and date data to DS3231
     Wire.beginTransmission(DS3231_ID);
@@ -90,6 +98,21 @@ uint8_t bcdToDec(uint8_t val) { return( (val/16*10) + (val%16) ); }
 
     return currentTime;
   }
+
+  rtc_temp_t getTemperature(){
+    rtc_temp_t temp;
+
+    Wire.beginTransmission(DS3231_ID);
+    Wire.write(DS3231_TEMPERATURE_MSB);
+    Wire.endTransmission();
+    Wire.requestFrom(DS3231_ID, 2);
+
+    temp.bytes[1] = Wire.read();
+    temp.bytes[0] = Wire.read();
+
+    return temp;
+  }
+
 #endif
 
 #endif

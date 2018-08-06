@@ -17,7 +17,7 @@ void printHelp() {
   Serial.println();
   Serial.print(F(":) dump\tprint out all the config and data in one big dump"));
   Serial.println();
-  Serial.print(F(":) step\tStep into the motorLoop"))
+  Serial.print(F(":) step\tStep into the motorLoop"));
 
   #if(DRIVE_ID)
   Serial.print(F(":) readLogs\tread the eeprom logs"));
@@ -61,10 +61,13 @@ void dataDump(){
 
 void debugLoop(){
   if(isStepping){
-    if(autoStep || (--stepCounter > 0)){ motorLoop(); }
+    if(autoStep || (--stepCounter > 0)){
+      logLoop();
+      motorLoop();
+    }
     return;
   }
-  
+
   if(Serial.available() == 0){ return; }
   Serial.print(F(":] "));
   String cmd = Serial.readStringUntil(13);
