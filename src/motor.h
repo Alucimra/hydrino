@@ -10,19 +10,29 @@ unsigned long lastMotorLoopAt = 0;
 uint8_t onCycleCount = 0;
 
 void startMotor(){
-  digitalWrite(MOTOR_ON, HIGH);
+  if(currentBatteryCharge() > BATTERY_MIN){
+    #if MOTOR_ON_FLIP
+    digitalWrite(MOTOR_ON, LOW);
+    #else
+    digitalWrite(MOTOR_ON, HIGH);
+    #endif
+  }
   isMotorOn = true;
   digitalWrite(LED_BUILTIN, HIGH);
-  #if DEBUG
+  #if DEBUG_DEEP
     Serial.println(F("call startMotor() completed"));
   #endif
 }
 
 void stopMotor(){
+  #if MOTOR_ON_FLIP
+  digitalWrite(MOTOR_ON, HIGH);
+  #else
   digitalWrite(MOTOR_ON, LOW);
+  #endif
   isMotorOn = false;
   digitalWrite(LED_BUILTIN, LOW);
-  #if DEBUG
+  #if DEBUG_DEEP
     Serial.println(F("call stopMotor() completed"));
   #endif
 }
@@ -30,7 +40,7 @@ void stopMotor(){
 void motorLoop(){
   lastMotorLoopAt = millis();
 
-  #if DEBUG
+  #if DEBUG_DEEP
     Serial.println(F("inside motorLoop()"));
     Serial.print(F("\tlastMotorLoopAt = "));
     Serial.println(lastMotorLoopAt);
@@ -52,16 +62,17 @@ void motorLoop(){
       startMotor();
       currentCycleStart = lastMotorLoopAt;
       currentCycleStop = getOnCycleTime(currentCycleStart);
+      onCycleCount++;
     }
     loopAround = (currentCycleStop < currentCycleStart);
   }
-  #if DEBUG
+  #if DEBUG_DEEP
     else {
       Serial.println(F("\t...not ready."));
     }
   #endif
 
-  #if DEBUG
+  #if DEBUG_DEEP
     /* In the SLEEP_MODE_IDLE, UART interrupts (from serial) wakes the system
      * this means the Arduino never gets a chance to actually sleep.
      * We use the blocking delay() instead to emulate sleep when in debug mode.

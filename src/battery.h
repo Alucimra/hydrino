@@ -5,8 +5,8 @@
 
 uint16_t currentBatteryCharge(){
 
-  #if DEBUG
-    Serial.println(F("currentBatteryCharge: "));
+  #if DEBUG_DEEP
+    Serial.print(F("currentBatteryCharge: "));
     Serial.println(analogRead(BATTERY_SENSE));
   #endif
 

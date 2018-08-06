@@ -11,44 +11,31 @@
 
 
 void printHelp() {
-  Serial.print(F(":) List of Debug Commands"));
-  Serial.println();
-  Serial.print(F(":) (empty) or ?\tThis thing you're reading."));
-  Serial.println();
-  Serial.print(F(":) dump\tprint out all the config and data in one big dump"));
-  Serial.println();
-  Serial.print(F(":) step\tStep into the motorLoop"));
+  Serial.println(F(":) List of Debug Commands"));
+  Serial.println(F(":) (empty) or ?\tThis thing you're reading."));
+  Serial.println(F(":) dump\tprint out all the config and data in one big dump"));
+  Serial.println(F(":) step\tStep into the motorLoop"));
 
   #if(DRIVE_ID)
-  Serial.print(F(":) readLogs\tread the eeprom logs"));
-  Serial.println();
-  Serial.print(F(":) clearLogs\tclear the eeprom logs with zeros"));
-  Serial.println();
+  Serial.println(F(":) readLogs\tread the eeprom logs"));
+  Serial.println(F(":) debugLogs\tattempt to read all log entries regardless of its marker"));
+  Serial.println(F(":) clearLogs\tclear the eeprom logs with zeros"));
   #endif
 
   #if(DS3231_ID)
   Serial.println(F(":) readTemp\tget the current temperature"));
   Serial.println(F(":) readBattery\tget the current battery charge"));
-  Serial.print(F(":) readTime\tread the current time"));
-  Serial.println();
-  Serial.print(F(":) readTime10\tread the current time 10 times (ticking seconds)"));
-  Serial.println();
-  Serial.print(F(":) writeTime\tset the current time"));
-  Serial.println();
+  Serial.println(F(":) readTime\tread the current time"));
+  Serial.println(F(":) readTime10\tread the current time 10 times (ticking seconds)"));
+  Serial.println(F(":) writeTime\tset the current time"));
   #endif
 
-  Serial.print(F(":) config:all\tprint all settings"));
-  Serial.println();
-  Serial.print(F(":) config:pins\tprint pin designations and i2c devices"));
-  Serial.println();
-  Serial.print(F(":) config:battery\tprint battery levels"));
-  Serial.println();
-  Serial.print(F(":) config:drive\tprint drive config"));
-  Serial.println();
-  Serial.print(F(":) config:clock\tprint clock config"));
-  Serial.println();
-  Serial.print(F(":) config:temp\tprint temperature sensor config"));
-  Serial.println();
+  Serial.println(F(":) config:all\tprint all settings"));
+  Serial.println(F(":) config:pins\tprint pin designations and i2c devices"));
+  Serial.println(F(":) config:battery\tprint battery levels"));
+  Serial.println(F(":) config:drive\tprint drive config"));
+  Serial.println(F(":) config:clock\tprint clock config"));
+  Serial.println(F(":) config:temp\tprint temperature sensor config"));
 }
 
 void dataDump(){
@@ -62,18 +49,30 @@ void dataDump(){
 }
 
 void readBattery(){
-  Serial.print(F(":) Battery charge:> "));
-  Serial.print(currentBatteryCharge());
-  Serial.println();
+  Serial.print(F(":) "));
+  uint16_t charge = currentBatteryCharge();
+  Serial.print(F(":: Battery charge:> "));
+  Serial.println(charge);
 }
 
 void debugLoop(){
   if(isStepping){
+    #if DEBUG_DEEP
+      Serial.println();
+      Serial.print(F(":) Stepping... autoStep / stepCounter"));
+      Serial.print(autoStep);
+      Serial.print(F(" / "));
+      Serial.println(stepCounter);
+      Serial.println(F("*****----------*****"));
+    #endif
     if(autoStep || (--stepCounter > 0)){
       logLoop();
       motorLoop();
+      return;
+    } else {
+      isStepping = false;
+      Serial.println(F(":) Stepping complete."));
     }
-    return;
   }
 
   if(Serial.available() == 0){ return; }
@@ -105,11 +104,11 @@ void debugLoop(){
 
   if(cmd == "readLogs"){ readDriveLogs(); }
   if(cmd == "clearLogs"){ clearDriveLogs(); }
+  if(cmd == "debugLogs"){ debugDriveLogs(); }
 
   if(cmd == "step"){ debugStepping(); }
 
   delay(50);
-  Serial.print(F(":] "));
 }
 
 #endif

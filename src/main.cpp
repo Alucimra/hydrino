@@ -23,11 +23,13 @@ void startup(){
   #if DEBUG
     Serial.begin(9600);
     while(!Serial){}
-    Serial.setTimeout(2000);
+    Serial.setTimeout(10000);
   #endif
 
   #if LOG_ENABLE
-    Serial.println(F(":) Startup..."));
+    #if DEBUG
+      Serial.println(F(":) Startup..."));
+    #endif
     setLogPosition();
   #endif
 }

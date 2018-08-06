@@ -3,13 +3,14 @@
 #ifndef HYDRINO_DEBUG_STEPPING
 #define HYDRINO_DEBUG_STEPPING
 
-uint16_t stepCounter = 0;
+int16_t stepCounter = 0;
 bool autoStep = false;
 bool isStepping = false;
 
 void debugStepping(){
   Serial.println(F(":) How many sleep cycles to step? (up to 32,767 or 0 for unlimited, negative to cancel)"));
   Serial.print(F(":] "));
+  Serial.setTimeout(60000);
   stepCounter = Serial.parseInt();
   if(stepCounter < 0){
     isStepping = false;
@@ -26,6 +27,7 @@ void debugStepping(){
     Serial.print(F(" cycles"));
     Serial.println();
   }
+  Serial.setTimeout(10000);
 }
 
 #endif

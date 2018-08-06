@@ -18,6 +18,7 @@
 #define MOTOR_ON_FLIP true
 
 #define DEBUG true
+#define DEBUG_DEEP true
 
 /* Cycle time calculations
  * CYCLE_ON_TIME is the amount of time (microseconds) that the motor is on
@@ -57,7 +58,7 @@ const uint8_t DRIVE_MARKER_BYTE = 0x4;
 // Logs
 #define LOG_ENABLE true
 #if DEBUG
-  const uint32_t LOG_EVERY = 30000;
+  const uint32_t LOG_EVERY = 60000;
   const uint16_t LOG_MARKER_START = 560;
   const uint16_t LOG_MARKER_STOP = 568;
 #else

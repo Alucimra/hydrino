@@ -1,5 +1,8 @@
 #include <config.h>
 #include <clock.h>
+//#include <time.h>
+// TODO: include time.h for strftime and unixtime to rtc_datetime conversion
+// NOTE: avr libc's epoch is on 1-1-2000
 
 #ifndef HYDRINO_DEBUG_CLOCK
 #define HYDRINO_DEBUG_CLOCK
@@ -36,7 +39,7 @@ void displayTime(rtc_datetime_t *time) {
   Serial.print(F(" "));
   displayShortTime(time);
   Serial.println();
-  Serial.print(F(":) unixtime:> "));
+  Serial.print(F(":: unixtime:> "));
   Serial.print(dateToUnixTimestamp(time));
   Serial.println();
 }
@@ -77,6 +80,7 @@ void displayTime(rtc_datetime_t *time) {
       rtc_datetime_t newTime;
       Serial.setTimeout(60000);
       // give up to 60 seconds to enter the input
+      Serial.println(F(":) Note: Time is assumed to be UTC for easy unixtime conversion"));
 
       Serial.print(F(":) Year (0 to 99)"));
       Serial.println();

@@ -11,26 +11,26 @@ uint8_t thresholdJump = (BATTERY_MAX - BATTERY_FLEX) / CYCLE_FLEX_THRESHOLD;
 uint32_t getOffCycleTime(uint32_t cycleStart){
   uint16_t charge = currentBatteryCharge();
 
-  #if DEBUG
+  #if DEBUG_DEEP
     Serial.print(F("getOffCycleTime: "));
   #endif
 
   if(charge >= BATTERY_OVERCHARGE){
-    #if DEBUG
+    #if DEBUG_DEEP
       Serial.println(cycleStart + 1);
     #endif
     return cycleStart + 1;
   }
 
   if(charge >= BATTERY_MAX){
-    #if DEBUG
+    #if DEBUG_DEEP
       Serial.println(cycleStart + CYCLE_ON_TIME);
     #endif
     return cycleStart + CYCLE_ON_TIME;
   }
 
   if(charge >= BATTERY_FLEX){
-    #if DEBUG
+    #if DEBUG_DEEP
       Serial.println(cycleStart + (
         (CYCLE_OFF_MULT - ((charge - BATTERY_FLEX) / thresholdJump) )
           * CYCLE_ON_TIME
@@ -43,13 +43,13 @@ uint32_t getOffCycleTime(uint32_t cycleStart){
   }
 
   if(charge >= BATTERY_MIN){
-    #if DEBUG
+    #if DEBUG_DEEP
       Serial.println(cycleStart + (CYCLE_OFF_MULT * CYCLE_ON_TIME));
     #endif
     return cycleStart + (CYCLE_OFF_MULT * CYCLE_ON_TIME);
   }
 
-  #if DEBUG
+  #if DEBUG_DEEP
     Serial.println(cycleStart + (CYCLE_OFF_MULT * CYCLE_ON_TIME));
   #endif
   // We are below the battery minimum
