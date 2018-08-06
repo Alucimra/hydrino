@@ -14,11 +14,14 @@
 //#define DEBUG_PIN
 
 // flip the on-off status of motors (default is on is high, off is low)
-// set to true this variable flips it (on is low, off is high)
+// setting this variable to true flips it (on is low, off is high)
 #define MOTOR_ON_FLIP true
 
-#define DEBUG true
-#define DEBUG_DEEP true
+#define DEBUG false
+#if DEBUG
+  #define DEBUG_DEEP true
+  #define DEBUG_DRIVE true
+#endif
 
 /* Cycle time calculations
  * CYCLE_ON_TIME is the amount of time (microseconds) that the motor is on
@@ -37,10 +40,22 @@
   const uint8_t CYCLE_OFF_MULT = 13;
 #endif
 
-const uint16_t BATTERY_OVERCHARGE = 1010; //3.258v -> 6.516
-const uint16_t BATTERY_MAX = 1000; // 3.23v -> 6.46
-const uint16_t BATTERY_FLEX = 985; // 990=6.38 985= 6.35v 980 = 3.16v -> 6.32
-const uint16_t BATTERY_MIN = 930; // 3.0v -> 6.0
+/* I started off using open-circuit numbers, but the battery voltage drops by
+ * a few points once it's hooked to the arduino...so These numbers below are
+ * adjusted for that slight drop.
+ *
+ * Open-cell (not plugged in):
+ *   overcharge: 1010 (3.258 / 6.516)
+ *   max: 1000 (3.23 / 6.46)
+ *   flex: 985 (990=6.38, 985=6.36, 980=6.32)
+ *   min: 930 (2.999 / 6.0)
+ *
+ * (multiply by 0.0032258 for divided or 0.0064516 for full)
+ */
+const uint16_t BATTERY_OVERCHARGE = 1000;
+const uint16_t BATTERY_MAX = 990;
+const uint16_t BATTERY_FLEX = 975;
+const uint16_t BATTERY_MIN = 920;
 const uint8_t CYCLE_FLEX_THRESHOLD = 3;
 
 
@@ -59,8 +74,13 @@ const uint8_t DRIVE_MARKER_BYTE = 0x4;
 #define LOG_ENABLE true
 #if DEBUG
   const uint32_t LOG_EVERY = 60000;
+  #if DEBUG_DRIVE
   const uint16_t LOG_MARKER_START = 560;
   const uint16_t LOG_MARKER_STOP = 568;
+  #else
+  const uint16_t LOG_MARKER_START = 569;
+  const uint16_t LOG_MARKER_STOP = 1023;
+  #endif
 #else
   const uint32_t LOG_EVERY = 3600000;
   const uint16_t LOG_MARKER_START = 569;

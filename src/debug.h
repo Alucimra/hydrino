@@ -3,7 +3,7 @@
 #include <debug/settings.h>
 #include <debug/log.h>
 #include <debug/stepping.h>
-#include <motor.h>
+#include <debug/motor.h>
 
 #ifndef HYDRINO_DEBUG
 #define HYDRINO_DEBUG
@@ -29,6 +29,10 @@ void printHelp() {
   Serial.println(F(":) readTime10\tread the current time 10 times (ticking seconds)"));
   Serial.println(F(":) writeTime\tset the current time"));
   #endif
+
+  Serial.println(F(":) motor:on\tturn the motor on with startMotor()"));
+  Serial.println(F(":) motor:off\tturn the motor off with startMotor()"));
+  Serial.println(F(":) motor\toutput motor status"));
 
   Serial.println(F(":) config:all\tprint all settings"));
   Serial.println(F(":) config:pins\tprint pin designations and i2c devices"));
@@ -101,6 +105,10 @@ void debugLoop(){
   if(cmd == "config:drive"){ printDriveSettings(); }
   if(cmd == "config:clock"){ printClockSettings(); }
   if(cmd == "config:temp"){ printTemperatureSettings(); }
+
+  if(cmd == "motor"){ debugMotorStatus(); }
+  if(cmd == "motor:on"){ debugMotorStart(); }
+  if(cmd == "motor:off"){ debugMotorStop(); }
 
   if(cmd == "readLogs"){ readDriveLogs(); }
   if(cmd == "clearLogs"){ clearDriveLogs(); }

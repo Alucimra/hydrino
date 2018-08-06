@@ -17,10 +17,17 @@ void startMotor(){
     digitalWrite(MOTOR_ON, HIGH);
     #endif
   }
+  #if DEBUG_DEEP
+  else {
+    Serial.println(F("\tnot really turning motor on, current charge less than min"));
+  }
+  #endif
+
   isMotorOn = true;
   digitalWrite(LED_BUILTIN, HIGH);
+
   #if DEBUG_DEEP
-    Serial.println(F("call startMotor() completed"));
+    Serial.println(F("\tstartMotor() completed"));
   #endif
 }
 
@@ -33,7 +40,7 @@ void stopMotor(){
   isMotorOn = false;
   digitalWrite(LED_BUILTIN, LOW);
   #if DEBUG_DEEP
-    Serial.println(F("call stopMotor() completed"));
+    Serial.println(F("\tstopMotor() completed"));
   #endif
 }
 
@@ -50,7 +57,6 @@ void motorLoop(){
     Serial.println(currentCycleStart);
     Serial.print(F("\tcurrentCycleStop = "));
     Serial.println(currentCycleStop);
-    Serial.println();
   #endif
 
   if(((!loopAround && lastMotorLoopAt > currentCycleStart) || (loopAround && lastMotorLoopAt < currentCycleStart)) && lastMotorLoopAt > currentCycleStop){
@@ -77,7 +83,9 @@ void motorLoop(){
      * this means the Arduino never gets a chance to actually sleep.
      * We use the blocking delay() instead to emulate sleep when in debug mode.
      */
-    Serial.println(F("done. Sleeping...*note: debug mode uses delay()"));
+    Serial.println(F("\tdone."));
+    Serial.println(F("Sleeping...*note: debug mode uses delay()"));
+    Serial.println();
     delay(4090);
   #else
     set_sleep_mode(SLEEP_MODE_IDLE);
