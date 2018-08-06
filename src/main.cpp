@@ -27,6 +27,7 @@ void startup(){
   #endif
 
   #if LOG_ENABLE
+    Serial.println(F(":) Startup..."));
     setLogPosition();
   #endif
 }
@@ -57,7 +58,9 @@ void loop(){
     debugLoop();
   #else
 
-    logLoop();
+    #if LOG_ENABLE
+      logLoop();
+    #endif
 
     // NOTE: Motor loop is where sleep happens, so should always be at the end
     motorLoop();

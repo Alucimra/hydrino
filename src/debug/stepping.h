@@ -8,7 +8,8 @@ bool autoStep = false;
 bool isStepping = false;
 
 void debugStepping(){
-  Serial.print(F(":) How many sleep cycles to step? (up to 32,767 or 0 for unlimited, negative to cancel) :] "));
+  Serial.println(F(":) How many sleep cycles to step? (up to 32,767 or 0 for unlimited, negative to cancel)"));
+  Serial.print(F(":] "));
   stepCounter = Serial.parseInt();
   if(stepCounter < 0){
     isStepping = false;

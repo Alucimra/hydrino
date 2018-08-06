@@ -4,25 +4,41 @@
 #ifndef HYDRINO_DEBUG_CLOCK
 #define HYDRINO_DEBUG_CLOCK
 
-void displayTime(rtc_datetime_t *time) {
+void displayTemperature(rtc_temp_t *temp){
+  Serial.print( ((temp->temp >> 6) * 25) / 100 );
+  Serial.print(F("."));
+  Serial.print( ((temp->temp >> 6) * 25) % 100 );
+  Serial.print(F(" C"));
+}
+
+void displayShortTime(rtc_datetime_t *time){
+  Serial.print(time->datetime.year, DEC);
+  Serial.print(F("-"));
+  Serial.print(time->datetime.month, DEC);
+  Serial.print(F("-"));
+  Serial.print(time->datetime.dayOfMonth, DEC);
+  Serial.print(F(" "));
+
   // send it to the serial monitor
   Serial.print(time->datetime.hour, DEC);
   // convert the byte variable to a decimal number when displayed
   Serial.print(F(":"));
-  if (time->datetime.minute<10) { Serial.print(F("0")); }
+  if (time->datetime.minute < 10) { Serial.print(F("0")); }
   Serial.print(time->datetime.minute, DEC);
   Serial.print(F(":"));
-  if (time->datetime.second<10) { Serial.print("0"); }
+  if (time->datetime.second < 10) { Serial.print(F("0")); }
   Serial.print(time->datetime.second, DEC);
-  Serial.print(F(" "));
-  Serial.print(time->datetime.dayOfMonth, DEC);
-  Serial.print(F("/"));
-  Serial.print(time->datetime.month, DEC);
-  Serial.print(F("/"));
-  Serial.print(time->datetime.year, DEC);
-  Serial.print(F(" "));
+}
+
+void displayTime(rtc_datetime_t *time) {
   Serial.print(F("Weekday (0=Sun, 6=Sat): "));
   Serial.print(time->datetime.dayOfWeek);
+  Serial.print(F(" "));
+  displayShortTime(time);
+  Serial.println();
+  Serial.print(F(":) unixtime:> "));
+  Serial.print(dateToUnixTimestamp(time));
+  Serial.println();
 }
 
   #ifndef DS3231_ID
@@ -34,6 +50,11 @@ void displayTime(rtc_datetime_t *time) {
 
     void writeTime(){
       Serial.print(F(":( Clock disabled or unavailable, can't set time"));
+      Serial.println();
+    }
+
+    void readTemperature(){
+      Serial.print(F(":( Clock disabled or unavailable, can't read temperature"));
       Serial.println();
     }
 
@@ -88,7 +109,7 @@ void displayTime(rtc_datetime_t *time) {
       Serial.print(F(":) Hour (0 to 23)"));
       Serial.println();
       Serial.print(F(":] "));
-      newTime.datetime.hour = (uint8_t)Serial.parseInt() % 24;
+      newTime.datetime.hour = (uint8_t)(Serial.parseInt() % 24);
       Serial.print(newTime.datetime.hour);
       Serial.println();
 
@@ -136,6 +157,13 @@ void displayTime(rtc_datetime_t *time) {
         Serial.print(F(":( Canceled by user."));
         Serial.println();
       }
+    }
+
+    void readTemperature(){
+      rtc_temp_t now = getTemperature();
+      Serial.print(F(":) Reading the temperature: "));
+      displayTemperature(&now);
+      Serial.println();
     }
   #endif
 #endif

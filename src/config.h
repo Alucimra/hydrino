@@ -1,11 +1,11 @@
+#ifndef HYDRINO_CONFIG
+#define HYDRINO_CONFIG
 #include <Arduino.h>
 #include <avr/power.h>
 #include <avr/sleep.h>
 #include <Wire.h>
 #include <EEPROM.h>
 
-#ifndef HYDRINO_CONFIG
-#define HYDRINO_CONFIG
 
 // Pins
 #define MOTOR_ON 3
@@ -16,7 +16,6 @@
 // flip the on-off status of motors (default is on is high, off is low)
 // set to true this variable flips it (on is low, off is high)
 #define MOTOR_ON_FLIP true
-
 
 #define DEBUG true
 
@@ -39,14 +38,14 @@
 
 const uint16_t BATTERY_OVERCHARGE = 1010; //3.258v -> 6.516
 const uint16_t BATTERY_MAX = 1000; // 3.23v -> 6.46
-const uint16_t BATTERY_FLEX = 980; // 3.16v -> 6.32
+const uint16_t BATTERY_FLEX = 985; // 990=6.38 985= 6.35v 980 = 3.16v -> 6.32
 const uint16_t BATTERY_MIN = 930; // 3.0v -> 6.0
-const uint8_t CYCLE_FLEX_THRESHOLD = 5;
+const uint8_t CYCLE_FLEX_THRESHOLD = 3;
 
 
 // Drive info (AT24C32)
 #define DRIVE_ID 0x57
-const uint16_t DRIVE_SPACE = 4096; //32768;
+const uint16_t DRIVE_SPACE = 4096; //32768 bits;
 const uint8_t DRIVE_WRITE_LIMIT = 0x30;
 const uint8_t DRIVE_MARKER_BYTE = 0x4;
 
@@ -57,9 +56,15 @@ const uint8_t DRIVE_MARKER_BYTE = 0x4;
 
 // Logs
 #define LOG_ENABLE true
-const uint16_t LOG_EVERY = 60000;
-const uint16_t LOG_MARKER_START = 569;
-const uint16_t LOG_MARKER_STOP = 1023;
+#if DEBUG
+  const uint32_t LOG_EVERY = 30000;
+  const uint16_t LOG_MARKER_START = 560;
+  const uint16_t LOG_MARKER_STOP = 568;
+#else
+  const uint32_t LOG_EVERY = 3600000;
+  const uint16_t LOG_MARKER_START = 569;
+  const uint16_t LOG_MARKER_STOP = 1023;
+#endif
 
 
 

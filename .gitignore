@@ -7,4 +7,5 @@
 /build
 /tools/rawLog.js
 /tools/*.log
-logs/
+/logs
+/tmp

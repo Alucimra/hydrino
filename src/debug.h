@@ -1,7 +1,7 @@
 #include <config.h>
 #include <debug/clock.h>
 #include <debug/settings.h>
-#include <debug/drive.h>
+#include <debug/log.h>
 #include <debug/stepping.h>
 #include <motor.h>
 
@@ -27,6 +27,8 @@ void printHelp() {
   #endif
 
   #if(DS3231_ID)
+  Serial.println(F(":) readTemp\tget the current temperature"));
+  Serial.println(F(":) readBattery\tget the current battery charge"));
   Serial.print(F(":) readTime\tread the current time"));
   Serial.println();
   Serial.print(F(":) readTime10\tread the current time 10 times (ticking seconds)"));
@@ -59,6 +61,12 @@ void dataDump(){
   Serial.print(F(":) Done."));
 }
 
+void readBattery(){
+  Serial.print(F(":) Battery charge:> "));
+  Serial.print(currentBatteryCharge());
+  Serial.println();
+}
+
 void debugLoop(){
   if(isStepping){
     if(autoStep || (--stepCounter > 0)){
@@ -78,6 +86,8 @@ void debugLoop(){
 
   if(cmd == "" or cmd == "?"){ printHelp(); }
 
+  if(cmd == "readBattery"){ readBattery(); }
+  if(cmd == "readTemp"){ readTemperature(); }
   if(cmd == "readTime"){ readTime(); }
   if(cmd == "readTime10"){
     for(uint8_t i=0; i<10; i++){
@@ -99,6 +109,7 @@ void debugLoop(){
   if(cmd == "step"){ debugStepping(); }
 
   delay(50);
+  Serial.print(F(":] "));
 }
 
 #endif

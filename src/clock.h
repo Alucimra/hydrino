@@ -7,16 +7,17 @@ struct rtc_dt {
   uint8_t year:7;
   uint8_t month:4;
   uint8_t dayOfMonth:5;
-  uint8_t hour:4;
+  uint8_t hour:5;
   uint8_t minute:6;
   uint8_t second:6;
+  // 33 bits at this point.
   // dayOfWeek isn't too useful as a separate field, and it pushes this struct
-  // into 32+8 territory. But it's part of ds3231 data...so it'll stay for now.
+  // into 5 byte territory. But it's part of ds3231 data...so it'll stay for now.
   // Note: It's not guaranteed to exist. check hasDayOfWeek
   // Note: We 0-index this value, but the DS3231 is 1-indexed.
   uint8_t dayOfWeek:3;
   bool hasDayOfWeek;
-  //uint8_t extra:4;
+  //uint8_t extra:3;
 };
 
 union rtc_datetime {
@@ -33,12 +34,32 @@ union rtc_temp {
 
 typedef union rtc_temp rtc_temp_t;
 
-
 // Convert normal decimal numbers to binary coded decimal
 uint8_t decToBcd(uint8_t val) { return( (val/10*16) + (val%10) ); }
 
 // Convert binary coded decimal to normal decimal numbers
 uint8_t bcdToDec(uint8_t val) { return( (val/16*10) + (val%16) ); }
+
+int32_t epochDays(uint8_t dayOfMonth, uint8_t month, uint8_t year){
+  year -= (month <= 2);
+  int16_t era = (year >= 0 ? year : year - 399) / 400;
+  uint16_t yoe = (year - era * 400); // 0..399
+  uint16_t doy = ((uint16_t)153*(month + (month > 2 ? -3 : 9)) + 2)/5 + dayOfMonth-1; // 0..365
+  uint32_t doe = yoe * 365 + yoe/4 - yoe/100 + doy; // 0..146096
+  // Note: remove the 719468 to set epoch to 2000-03-01 instead of 1970-01-01
+  return ((int32_t)era * 146097 + doe - 719468);
+}
+
+// Note: For this to work properly, the time needs to be set as UTC
+// because the RTC does not track timezone (and daylight savings)
+uint32_t dateToUnixTimestamp(rtc_datetime_t *date){
+  uint32_t unixtime = (uint32_t)86400 * epochDays(date->datetime.dayOfMonth, date->datetime.month, 2000+date->datetime.year);
+  unixtime += 3600 * date->datetime.hour;
+  unixtime += 60 * date->datetime.minute;
+  unixtime += date->datetime.second;
+
+  return unixtime;
+}
 
 #ifndef DS3231_ID
   void setTime(rtc_datetime_t *newTime){}

@@ -11,7 +11,7 @@ uint32_t lastLogAt = 0;
 uint16_t currentLogPos = 0;
 
 struct log_element {
-  rtc_datetime_t datetime;
+  uint32_t unixtime;
   rtc_temp_t temp;
   uint16_t power;
   uint8_t cycles;
@@ -21,7 +21,7 @@ typedef struct log_element log_element_t;
 
 union log_entry {
   struct log_element entry;
-  uint8_t bytes[sizeof(log_element_t)];
+  uint8_t bytes[10];
 };
 
 typedef union log_entry log_entry_t;
@@ -29,6 +29,10 @@ typedef union log_entry log_entry_t;
 void setLogPosition(){
   uint16_t check = LOG_MARKER_START - 1;
   bool isZero = false;
+
+  #if DEBUG
+    Serial.println(F("Setting log position..."));
+  #endif
 
   while(!isZero && check <= LOG_MARKER_STOP){
     isZero = (EEPROM.read(++check) == 0);
@@ -39,6 +43,11 @@ void setLogPosition(){
   } else {
     currentLogPos = check;
   }
+
+  #if DEBUG
+    Serial.print(F("\t-> currentLogPos: "));
+    Serial.println(currentLogPos);
+  #endif
 }
 
 // WARNING: address is a page address, 6-bit end will wrap around
@@ -76,26 +85,77 @@ void writeLog(uint8_t logPos, log_entry_t* data){
 
   uint16_t drive_index = (logPos - LOG_MARKER_START);
 
-  driveWrite(drive_index * sizeof(log_entry_t), data->bytes, sizeof(log_entry_t));
+  uint8_t bytes[9];
+  bytes[0] = data->bytes[0];
+  bytes[1] = data->bytes[1];
+  bytes[2] = data->bytes[2];
+  bytes[3] = data->bytes[3];
+  bytes[4] = data->bytes[5]; // Skips 5th byte of rtc_time, the useless dow
+  bytes[5] = data->bytes[6];
+  bytes[6] = data->bytes[7];
+  bytes[7] = data->bytes[8];
+  bytes[8] = data->bytes[9];
+
+  driveWrite(drive_index * 9, bytes, 9);
 }
 
 log_entry_t readLog(uint8_t logPos){
   log_entry_t data;
   uint16_t drive_index = logPos - LOG_MARKER_START;
 
-  driveRead(drive_index * sizeof(log_entry_t), data.bytes, sizeof(log_entry_t));
+  uint8_t bytes[9];
+  driveRead(drive_index * 9, bytes, 9);
+
+  data.bytes[0] = bytes[0];
+  data.bytes[1] = bytes[1];
+  data.bytes[2] = bytes[2];
+  data.bytes[3] = bytes[3];
+  data.bytes[4] = 0;
+  data.bytes[5] = bytes[4];
+  data.bytes[6] = bytes[5];
+  data.bytes[7] = bytes[6];
+  data.bytes[8] = bytes[7];
+  data.bytes[9] = bytes[8];
+
   return data;
 }
 
 
 void saveLogEntry(){
   log_entry_t data;
-  data.entry.datetime = getTime();
+  rtc_datetime_t now = getTime();
+  data.entry.unixtime = dateToUnixTimestamp(&now);
   data.entry.power = currentBatteryCharge();
   data.entry.temp = getTemperature();
   data.entry.cycles = onCycleCount;
 
-  writeLog(currentLogPos, &data);
+  // outside of this range means setLogPosition did not function properly
+  if(currentLogPos >= LOG_MARKER_START && currentLogPos <= LOG_MARKER_STOP){
+    writeLog(currentLogPos, &data);
+    if(currentLogPos < LOG_MARKER_STOP){
+      currentLogPos++;
+    } else {
+      currentLogPos = LOG_MARKER_START;
+    }
+    lastLogAt = millis();
+    Serial.print(F("Saved log: "));
+    Serial.print(lastLogAt);
+    Serial.println();
+  }
+  #if DEBUG
+  else {
+    Serial.print(F("saveLogEntry() failed. currentLogPos out of bounds"));
+    Serial.println();
+    Serial.print(F("\tcurrent\tmin\tmax"));
+    Serial.println();
+    Serial.print(currentLogPos);
+    Serial.print(F("\t"));
+    Serial.print(LOG_MARKER_START);
+    Serial.print(F("\t"));
+    Serial.print(LOG_MARKER_STOP);
+    Serial.println();
+  }
+  #endif
   currentLogPos++;
 }
 

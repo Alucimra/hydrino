@@ -12,7 +12,7 @@ uint32_t getOffCycleTime(uint32_t cycleStart){
   uint16_t charge = currentBatteryCharge();
 
   #if DEBUG
-    Serial.println("getOffCycleTime: ");
+    Serial.print(F("getOffCycleTime: "));
   #endif
 
   if(charge >= BATTERY_OVERCHARGE){
